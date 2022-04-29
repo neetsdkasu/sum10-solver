@@ -42,7 +42,7 @@ var (
 	UnsatisfiedSum = errors.New("Unsatisfied Sum")
 )
 
-func (game *Game) Take(marker m.Marker) (next *Game, err error) {
+func (game *Game) Take(marker *m.Marker) (next *Game, err error) {
 	if !marker.IsValid() {
 		return nil, InvalidMarker
 	}

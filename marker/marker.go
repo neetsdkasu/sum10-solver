@@ -8,12 +8,12 @@ type Marker struct {
 	Field [][]bool
 }
 
-func New() Marker {
+func New() *Marker {
 	field := util.MakeEmptyField[bool]()
-	return Marker{Field: field}
+	return &Marker{Field: field}
 }
 
-func (marker Marker) Count() int {
+func (marker *Marker) Count() int {
 	count := 0
 	for _, line := range marker.Field {
 		for _, mark := range line {
@@ -25,7 +25,7 @@ func (marker Marker) Count() int {
 	return count
 }
 
-func (marker Marker) IsValid() bool {
+func (marker *Marker) IsValid() bool {
 	markedCount := marker.Count()
 	if markedCount == 0 {
 		return false
@@ -42,17 +42,17 @@ func (marker Marker) IsValid() bool {
 	return false
 }
 
-func Copy(dst, src Marker) {
+func Copy(dst, src *Marker) {
 	util.CopyField(dst.Field, src.Field)
 }
 
-func (marker Marker) makeCopy() Marker {
+func (marker *Marker) makeCopy() *Marker {
 	dst := New()
 	Copy(dst, marker)
 	return dst
 }
 
-func (marker Marker) dfs(row0, col0 int) int {
+func (marker *Marker) dfs(row0, col0 int) int {
 	field := marker.makeCopy().Field
 	stack := append([]int{}, row0, col0)
 	count := 0
