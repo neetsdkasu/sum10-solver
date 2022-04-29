@@ -3,11 +3,7 @@ package problem
 import (
 	mt "bitbucket.org/neetsdkasu/mersenne_twister_go"
 	"math"
-)
-
-const (
-	RowCount = 8
-	ColCount = 8
+	"sum10-solver/util"
 )
 
 type Problem struct {
@@ -17,7 +13,7 @@ type Problem struct {
 
 func New(seed uint32) *Problem {
 	mt := mt.NewMersenneTwister().Init(seed)
-	numbers := make([]int, RowCount*ColCount)
+	numbers := make([]int, util.RowCount*util.ColCount)
 	for i := range numbers {
 		numbers[i] = i % 10
 	}
@@ -25,11 +21,10 @@ func New(seed uint32) *Problem {
 		k := int(math.Floor(mt.Real2() * float64(i+1)))
 		numbers[i], numbers[k] = numbers[k], numbers[i]
 	}
-	field := make([][]int, RowCount)
+	field := util.MakeEmptyField[int]()
 	for row := range field {
-		field[row] = make([]int, ColCount)
 		for col := range field[row] {
-			field[row][col] = numbers[row*ColCount+col]
+			field[row][col] = numbers[row*util.ColCount+col]
 		}
 	}
 	return &Problem{

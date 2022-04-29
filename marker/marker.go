@@ -1,23 +1,19 @@
 package marker
 
-import "sum10-solver/problem"
+import (
+	"sum10-solver/util"
+)
 
 type Marker struct {
 	Field [][]bool
 }
 
-func New() *Marker {
-	field := make([][]bool, problem.RowCount)
-	for row := range field {
-		field[row] = make([]bool, problem.ColCount)
-	}
-	return &Marker{Field: field}
+func New() Marker {
+	field := util.MakeEmptyField[bool]()
+	return Marker{Field: field}
 }
 
-func (marker *Marker) Count() int {
-	if marker == nil {
-		return 0
-	}
+func (marker Marker) Count() int {
 	count := 0
 	for _, line := range marker.Field {
 		for _, mark := range line {
@@ -29,10 +25,7 @@ func (marker *Marker) Count() int {
 	return count
 }
 
-func (marker *Marker) IsValid() bool {
-	if marker == nil {
-		return false
-	}
+func (marker Marker) IsValid() bool {
 	markedCount := marker.Count()
 	if markedCount == 0 {
 		return false
@@ -49,19 +42,17 @@ func (marker *Marker) IsValid() bool {
 	return false
 }
 
-func Copy(dst, src *Marker) {
-	for row := range dst.Field {
-		copy(dst.Field[row], src.Field[row])
-	}
+func Copy(dst, src Marker) {
+	util.CopyField(dst.Field, src.Field)
 }
 
-func (marker *Marker) makeCopy() *Marker {
+func (marker Marker) makeCopy() Marker {
 	dst := New()
 	Copy(dst, marker)
 	return dst
 }
 
-func (marker *Marker) dfs(row0, col0 int) int {
+func (marker Marker) dfs(row0, col0 int) int {
 	field := marker.makeCopy().Field
 	stack := append([]int{}, row0, col0)
 	count := 0
