@@ -13,6 +13,26 @@ func New() *Marker {
 	return &Marker{Field: field}
 }
 
+func (marker *Marker) Has(row, col int) bool {
+	return marker.Field[row][col]
+}
+
+func (marker *Marker) Set(row, col int) {
+	marker.Field[row][col] = true
+}
+
+func (marker *Marker) Unset(row, col int) {
+	marker.Field[row][col] = false
+}
+
+func (marker *Marker) Clear() {
+	for _, line := range marker.Field {
+		for col := range line {
+			line[col] = false
+		}
+	}
+}
+
 func (marker *Marker) Count() int {
 	count := 0
 	for _, line := range marker.Field {
@@ -35,7 +55,7 @@ func (marker *Marker) IsValid() bool {
 			if !mark {
 				continue
 			}
-			count := marker.dfs(row, col)
+			count := marker.GetCopy().dfsDelete(row, col)
 			return count == markedCount
 		}
 	}
@@ -46,32 +66,45 @@ func Copy(dst, src *Marker) {
 	util.CopyField(dst.Field, src.Field)
 }
 
-func (marker *Marker) makeCopy() *Marker {
+func (marker *Marker) GetCopy() *Marker {
 	dst := New()
 	Copy(dst, marker)
 	return dst
 }
 
-func (marker *Marker) dfs(row0, col0 int) int {
-	field := marker.makeCopy().Field
-	stack := append([]int{}, row0, col0)
-	count := 0
-	for 0 < len(stack) {
-		length := len(stack)
-		row, col := stack[length-2], stack[length-1]
-		stack = stack[:length-2]
-		if row < 0 || col < 0 || len(field) <= row || len(field[row]) <= col {
-			continue
-		}
-		if !field[row][col] {
-			continue
-		}
-		count++
-		field[row][col] = false
-		stack = append(stack, row-1, col)
-		stack = append(stack, row+1, col)
-		stack = append(stack, row, col-1)
-		stack = append(stack, row, col+1)
+func (marker *Marker) dfsDelete(row, col int) int {
+	if row < 0 || col < 0 || util.RowCount <= row || util.ColCount <= col {
+		return 0
 	}
-	return count
+	if !marker.Field[row][col] {
+		return 0
+	}
+	marker.Field[row][col] = false
+	return 1 +
+		marker.dfsDelete(row+1, col) +
+		marker.dfsDelete(row-1, col) +
+		marker.dfsDelete(row, col+1) +
+		marker.dfsDelete(row, col-1)
+}
+
+func (marker *Marker) Sum(field [][]int) int {
+	sum := 0
+	for row, line := range marker.Field {
+		for col, mark := range line {
+			if mark {
+				sum += field[row][col]
+			}
+		}
+	}
+	return sum
+}
+
+func (marker *Marker) Fill(field [][]int, value int) {
+	for row, line := range marker.Field {
+		for col, mark := range line {
+			if mark {
+				field[row][col] = value
+			}
+		}
+	}
 }

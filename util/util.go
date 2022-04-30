@@ -18,3 +18,7 @@ func CopyField[T int | bool](dst, src [][]T) {
 		copy(dst[row], line)
 	}
 }
+
+func Swap(field [][]int, row1, col1, row2, col2 int) {
+	field[row1][col1], field[row2][col2] = field[row2][col2], field[row1][col1]
+}
