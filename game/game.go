@@ -18,6 +18,8 @@ type Game struct {
 	Steps   int
 	Score   int
 	Field   [][]int
+	Prev    *Game
+	Taked   *m.Marker
 }
 
 func New(problem *p.Problem) *Game {
@@ -31,6 +33,8 @@ func New(problem *p.Problem) *Game {
 		Steps:   0,
 		Score:   0,
 		Field:   field,
+		Prev:    nil,
+		Taked:   nil,
 	}
 }
 
@@ -66,6 +70,8 @@ func (game *Game) Take(marker *m.Marker) (next *Game, err error) {
 	next.fill()
 	next.Steps++
 	next.Score += Sum
+	next.Prev = game
+	next.Taked = marker.GetCopy()
 	return next, nil
 }
 

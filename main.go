@@ -60,14 +60,13 @@ func main() {
 		}
 		fmt.Println(marker.IsValid())
 
-		next, err = game.Take(marker)
+		game, err = game.Take(marker)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		showGameWithMark(game, marker)
-		showGame(next)
-		game = next
+		showGameWithMark(game.Prev, game.Taked)
+		showGame(game)
 	}
 }
 
