@@ -49,6 +49,13 @@ func main() {
 		[]int{0, 6, 0, 7},
 		[]int{2, 5, 3, 2, 3, 4, 3, 5, 4, 2, 4, 3, 4, 4},
 		[]int{2, 1, 2, 2, 2, 3, 2, 4},
+		[]int{5, 2, 6, 2},
+		[]int{5, 5, 6, 3, 6, 4, 6, 5, 7, 5},
+		[]int{0, 6, 0, 7},
+		[]int{4, 5, 4, 6},
+		[]int{5, 4, 6, 4},
+		[]int{4, 3, 4, 4},
+		[]int{2, 3, 3, 3},
 	}
 
 	game = next
@@ -61,12 +68,13 @@ func main() {
 		fmt.Println(marker.IsValid())
 
 		game, err = game.Take(marker)
+		showGameWithMark(game.Prev, game.Taked)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		showGameWithMark(game.Prev, game.Taked)
 		showGame(game)
+		fmt.Println("IsGameOver?", game.IsGameOver())
 	}
 }
 

@@ -5,6 +5,11 @@ const (
 	ColCount = 8
 )
 
+func FieldContains(row, col int) bool {
+	return 0 <= row && row < RowCount &&
+		0 <= col && col < ColCount
+}
+
 func MakeEmptyField[T int | bool]() [][]T {
 	field := make([][]T, RowCount)
 	for row := range field {

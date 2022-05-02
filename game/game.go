@@ -2,8 +2,8 @@ package game
 
 import (
 	"errors"
-	m "sum10-solver/marker"
-	p "sum10-solver/problem"
+	"sum10-solver/marker"
+	"sum10-solver/problem"
 	"sum10-solver/util"
 )
 
@@ -14,15 +14,15 @@ const (
 )
 
 type Game struct {
-	Problem *p.Problem
+	Problem *problem.Problem
 	Steps   int
 	Score   int
 	Field   [][]int
 	Prev    *Game
-	Taked   *m.Marker
+	Taked   *marker.Marker
 }
 
-func New(problem *p.Problem) *Game {
+func New(problem *problem.Problem) *Game {
 	if problem == nil {
 		return nil
 	}
@@ -57,7 +57,7 @@ var (
 	UnsatisfiedSum = errors.New("Unsatisfied Sum")
 )
 
-func (game *Game) Take(marker *m.Marker) (next *Game, err error) {
+func (game *Game) Take(marker *marker.Marker) (next *Game, err error) {
 	if !marker.IsValid() {
 		return nil, InvalidMarker
 	}
@@ -163,4 +163,95 @@ func (game *Game) moveToRight() {
 			}
 		}
 	}
+}
+
+func (game *Game) IsGameOver() bool {
+	return !game.findSum10OnHorizontalLine() &&
+		!game.findSum10OnVerticalLine() &&
+		!game.findSum10()
+}
+
+func (game *Game) findSum10OnHorizontalLine() bool {
+	for _, line := range game.Field {
+		head := 0
+		tail := 0
+		sum := 0
+		for {
+			for sum < Sum && head < util.ColCount {
+				sum += line[head]
+				head++
+			}
+			if sum < Sum {
+				break
+			}
+			if sum == Sum {
+				return true
+			}
+			for sum >= Sum && tail < head {
+				sum -= line[tail]
+				tail++
+			}
+		}
+	}
+	return false
+}
+
+func (game *Game) findSum10OnVerticalLine() bool {
+	field := game.Field
+	for col := 0; col < util.ColCount; col++ {
+		head := 0
+		tail := 0
+		sum := 0
+		for {
+			for sum < Sum && head < util.RowCount {
+				sum += field[head][col]
+				head++
+			}
+			if sum < Sum {
+				break
+			}
+			if sum == Sum {
+				return true
+			}
+			for sum >= Sum && tail < head {
+				sum -= field[tail][col]
+				tail++
+			}
+		}
+	}
+	return false
+}
+
+func (game *Game) findSum10() bool {
+	const HalfValue = Sum / 2
+	marker := marker.New()
+	for row, line := range game.Field {
+		for col, value := range line {
+			if value <= HalfValue {
+				if game.findSum10ByDfs(marker, row, col, 0) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func (game *Game) findSum10ByDfs(marker *marker.Marker, row, col, sum int) bool {
+	if !util.FieldContains(row, col) {
+		return false
+	}
+	if marker.Has(row, col) {
+		return false
+	}
+	sum += game.Field[row][col]
+	if sum >= Sum {
+		return sum == Sum
+	}
+	marker.Set(row, col)
+	defer marker.Unset(row, col)
+	return game.findSum10ByDfs(marker, row+1, col, sum) ||
+		game.findSum10ByDfs(marker, row-1, col, sum) ||
+		game.findSum10ByDfs(marker, row, col+1, sum) ||
+		game.findSum10ByDfs(marker, row, col-1, sum)
 }

@@ -73,7 +73,7 @@ func (marker *Marker) GetCopy() *Marker {
 }
 
 func (marker *Marker) dfsDelete(row, col int) int {
-	if row < 0 || col < 0 || util.RowCount <= row || util.ColCount <= col {
+	if !util.FieldContains(row, col) {
 		return 0
 	}
 	if !marker.Field[row][col] {
