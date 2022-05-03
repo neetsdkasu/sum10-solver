@@ -3,6 +3,10 @@ package util
 const (
 	RowCount = 8
 	ColCount = 8
+
+	Sum      = 10
+	Hole     = -1
+	Obstacle = 11
 )
 
 func FieldContains(row, col int) bool {

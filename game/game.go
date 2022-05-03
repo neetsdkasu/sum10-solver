@@ -7,12 +7,6 @@ import (
 	"sum10-solver/util"
 )
 
-const (
-	Sum      = 10
-	Hole     = -1
-	Obstacle = 11
-)
-
 type Game struct {
 	Problem *problem.Problem
 	Steps   int
@@ -62,14 +56,14 @@ func (game *Game) Take(marker *marker.Marker) (next *Game, err error) {
 		return nil, InvalidMarker
 	}
 	sum := marker.Sum(game.Field)
-	if sum != Sum {
+	if sum != util.Sum {
 		return nil, UnsatisfiedSum
 	}
 	next = game.GetCopy()
-	marker.Fill(next.Field, Hole)
+	marker.Fill(next.Field, util.Hole)
 	next.fill()
 	next.Steps++
-	next.Score += Sum
+	next.Score += util.Sum
 	next.Prev = game
 	next.Taked = marker.GetCopy()
 	return next, nil
@@ -88,8 +82,8 @@ func (game *Game) fill() {
 	}
 	for _, line := range game.Field {
 		for col, value := range line {
-			if value == Hole {
-				line[col] = Obstacle
+			if value == util.Hole {
+				line[col] = util.Obstacle
 			}
 		}
 	}
@@ -100,11 +94,11 @@ func (game *Game) moveToBottom() {
 	for col := 0; col < util.ColCount; col++ {
 		holeRow := util.RowCount - 1
 		for curRow := util.RowCount - 1; 0 <= curRow; curRow-- {
-			if field[curRow][col] == Hole {
+			if field[curRow][col] == util.Hole {
 				continue
 			}
 			for ; curRow < holeRow; holeRow-- {
-				if field[holeRow][col] == Hole {
+				if field[holeRow][col] == util.Hole {
 					util.Swap(field, holeRow, col, curRow, col)
 					break
 				}
@@ -117,11 +111,11 @@ func (game *Game) moveToLeft() {
 	for _, line := range game.Field {
 		holeCol := 0
 		for curCol := 0; curCol < util.ColCount; curCol++ {
-			if line[curCol] == Hole {
+			if line[curCol] == util.Hole {
 				continue
 			}
 			for ; holeCol < curCol; holeCol++ {
-				if line[holeCol] == Hole {
+				if line[holeCol] == util.Hole {
 					line[holeCol], line[curCol] = line[curCol], line[holeCol]
 					break
 				}
@@ -135,11 +129,11 @@ func (game *Game) moveToTop() {
 	for col := 0; col < util.ColCount; col++ {
 		holeRow := 0
 		for curRow := 0; curRow < util.RowCount; curRow++ {
-			if field[curRow][col] == Hole {
+			if field[curRow][col] == util.Hole {
 				continue
 			}
 			for ; holeRow < curRow; holeRow++ {
-				if field[holeRow][col] == Hole {
+				if field[holeRow][col] == util.Hole {
 					util.Swap(field, curRow, col, holeRow, col)
 					break
 				}
@@ -152,11 +146,11 @@ func (game *Game) moveToRight() {
 	for _, line := range game.Field {
 		holeCol := util.ColCount - 1
 		for curCol := util.ColCount - 1; 0 <= curCol; curCol-- {
-			if line[curCol] == Hole {
+			if line[curCol] == util.Hole {
 				continue
 			}
 			for ; curCol < holeCol; holeCol-- {
-				if line[holeCol] == Hole {
+				if line[holeCol] == util.Hole {
 					line[curCol], line[holeCol] = line[holeCol], line[curCol]
 					break
 				}
@@ -177,17 +171,17 @@ func (game *Game) findSum10OnHorizontalLine() bool {
 		tail := 0
 		sum := 0
 		for {
-			for sum < Sum && head < util.ColCount {
+			for sum < util.Sum && head < util.ColCount {
 				sum += line[head]
 				head++
 			}
-			if sum < Sum {
+			if sum < util.Sum {
 				break
 			}
-			if sum == Sum {
+			if sum == util.Sum {
 				return true
 			}
-			for sum >= Sum && tail < head {
+			for sum >= util.Sum && tail < head {
 				sum -= line[tail]
 				tail++
 			}
@@ -203,17 +197,17 @@ func (game *Game) findSum10OnVerticalLine() bool {
 		tail := 0
 		sum := 0
 		for {
-			for sum < Sum && head < util.RowCount {
+			for sum < util.Sum && head < util.RowCount {
 				sum += field[head][col]
 				head++
 			}
-			if sum < Sum {
+			if sum < util.Sum {
 				break
 			}
-			if sum == Sum {
+			if sum == util.Sum {
 				return true
 			}
-			for sum >= Sum && tail < head {
+			for sum >= util.Sum && tail < head {
 				sum -= field[tail][col]
 				tail++
 			}
@@ -223,7 +217,7 @@ func (game *Game) findSum10OnVerticalLine() bool {
 }
 
 func (game *Game) findSum10() bool {
-	const HalfValue = Sum / 2
+	const HalfValue = util.Sum / 2
 	marker := marker.New()
 	for row, line := range game.Field {
 		for col, value := range line {
@@ -245,8 +239,8 @@ func (game *Game) findSum10ByDfs(marker *marker.Marker, row, col, sum int) bool 
 		return false
 	}
 	sum += game.Field[row][col]
-	if sum >= Sum {
-		return sum == Sum
+	if sum >= util.Sum {
+		return sum == util.Sum
 	}
 	marker.Set(row, col)
 	defer marker.Unset(row, col)

@@ -5,18 +5,14 @@ import (
 	"sum10-solver/game"
 	"sum10-solver/marker"
 	"sum10-solver/problem"
+	"sum10-solver/search"
 )
 
 func main() {
 
 	problem := problem.New(5531)
 
-	for _, line := range problem.Field {
-		for _, value := range line {
-			fmt.Printf(" %2d", value)
-		}
-		fmt.Println()
-	}
+	showField(problem.Field)
 
 	game := game.New(problem)
 
@@ -76,12 +72,28 @@ func main() {
 		showGame(game)
 		fmt.Println("IsGameOver?", game.IsGameOver())
 	}
+
+	tens := search.Search(problem.Field)
+	fmt.Println("SEARCH", len(tens))
+	for i, t := range tens {
+		fmt.Println("---------", i, "----------")
+		fmt.Println("IsValid", t.IsValid())
+		showFieldWithMark(problem.Field, t)
+	}
+
 }
 
-func showGameWithMark(game *game.Game, marker *marker.Marker) {
-	fmt.Println("Steps:", game.Steps)
-	fmt.Println("Score:", game.Score)
-	for row, line := range game.Field {
+func showField(field [][]int) {
+	for _, line := range field {
+		for _, value := range line {
+			fmt.Printf(" %2d", value)
+		}
+		fmt.Println()
+	}
+}
+
+func showFieldWithMark(field [][]int, marker *marker.Marker) {
+	for row, line := range field {
 		for col, value := range line {
 			if marker.Has(row, col) {
 				fmt.Printf(" *%d", value)
@@ -92,13 +104,15 @@ func showGameWithMark(game *game.Game, marker *marker.Marker) {
 		fmt.Println()
 	}
 }
+
+func showGameWithMark(game *game.Game, marker *marker.Marker) {
+	fmt.Println("Steps:", game.Steps)
+	fmt.Println("Score:", game.Score)
+	showFieldWithMark(game.Field, marker)
+}
+
 func showGame(game *game.Game) {
 	fmt.Println("Steps:", game.Steps)
 	fmt.Println("Score:", game.Score)
-	for _, line := range game.Field {
-		for _, value := range line {
-			fmt.Printf(" %2d", value)
-		}
-		fmt.Println()
-	}
+	showField(game.Field)
 }
