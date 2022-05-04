@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"sum10-solver/game"
 	"sum10-solver/marker"
 	"sum10-solver/problem"
 	"sum10-solver/search"
+	"time"
 )
 
 func main() {
@@ -13,74 +15,46 @@ func main() {
 	problem := problem.New(5531)
 
 	showField(problem.Field)
+	fmt.Println("-----------------------------")
 
-	game := game.New(problem)
+	game0 := game.New(problem)
 
-	marker := marker.New()
+	time0 := time.Now()
 
-	fmt.Println(marker.IsValid())
+	rand.Seed(time0.Unix())
 
-	marker.Set(4, 4)
-	fmt.Println(marker.IsValid())
+	scores := make([]int, 300)
 
-	marker.Set(5, 4)
-	marker.Set(5, 3)
-	marker.Set(6, 2)
-	marker.Set(6, 1)
-	fmt.Println(marker.IsValid())
-
-	marker.Set(5, 2)
-	fmt.Println(marker.IsValid())
-
-	next, err := game.Take(marker)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	showGameWithMark(game, marker)
-	showGame(next)
-
-	steps := [][]int{
-		[]int{2, 0, 3, 0, 3, 1, 4, 1},
-		[]int{0, 6, 0, 7},
-		[]int{2, 5, 3, 2, 3, 4, 3, 5, 4, 2, 4, 3, 4, 4},
-		[]int{2, 1, 2, 2, 2, 3, 2, 4},
-		[]int{5, 2, 6, 2},
-		[]int{5, 5, 6, 3, 6, 4, 6, 5, 7, 5},
-		[]int{0, 6, 0, 7},
-		[]int{4, 5, 4, 6},
-		[]int{5, 4, 6, 4},
-		[]int{4, 3, 4, 4},
-		[]int{2, 3, 3, 3},
-	}
-
-	game = next
-
-	for _, step := range steps {
-		marker.Clear()
-		for i := 0; i < len(step); i += 2 {
-			marker.Set(step[i], step[i+1])
+	for i := 0; i < 1000; i++ {
+		game := game0
+		for {
+			markerList := search.Search(game.Field)
+			if len(markerList) == 0 {
+				break
+			}
+			sel := rand.Intn(len(markerList))
+			marker := markerList[sel]
+			var err error
+			if game, err = game.Take(marker); err != nil {
+				fmt.Println(err)
+				return
+			}
+			// showGameWithMark(game.Prev, marker)
+			// fmt.Println("-----------------------------")
 		}
-		fmt.Println(marker.IsValid())
+		scores[game.Score]++
+		// showGame(game)
+	}
+	time1 := time.Now()
 
-		game, err = game.Take(marker)
-		showGameWithMark(game.Prev, game.Taked)
-		if err != nil {
-			fmt.Println(err)
-			return
+	for sc, cnt := range scores {
+		if cnt == 0 {
+			continue
 		}
-		showGame(game)
-		fmt.Println("IsGameOver?", game.IsGameOver())
+		fmt.Println("SCORE", sc, "COUNT", cnt)
 	}
 
-	tens := search.Search(problem.Field)
-	fmt.Println("SEARCH", len(tens))
-	for i, t := range tens {
-		fmt.Println("---------", i, "----------")
-		fmt.Println("IsValid", t.IsValid())
-		showFieldWithMark(problem.Field, t)
-	}
-
+	fmt.Println("time", time1.Sub(time0))
 }
 
 func showField(field [][]int) {
