@@ -1,6 +1,7 @@
 package search
 
 import (
+	"sort"
 	"sum10-solver/marker"
 	"sum10-solver/util"
 )
@@ -11,6 +12,8 @@ type state struct {
 	Cells     uint64
 	Neigbours uint64
 	Sum       int
+	NonZero   int
+	Count     int
 }
 
 func shift(row, col int) int {
@@ -33,6 +36,10 @@ func newState(row, col, value int) *state {
 		s.Neigbours |= 1 << shift(row, col-1)
 	}
 	s.Sum = value
+	s.Count = 1
+	if 0 < value {
+		s.NonZero = 1
+	}
 	return s
 }
 
@@ -63,6 +70,8 @@ func (s *state) Merge(o *state) *state {
 	r.Cells = s.Cells | o.Cells
 	r.Neigbours = (s.Neigbours | o.Neigbours) &^ r.Cells
 	r.Sum = s.Sum + o.Sum
+	r.NonZero = s.NonZero + o.NonZero
+	r.Count = s.Count + o.Count
 	return r
 }
 
@@ -87,6 +96,18 @@ func Search(field [][]int) []*marker.Marker {
 			}
 		}
 	}
+
+	sort.Slice(stateList, func(a, b int) bool {
+		nzA := stateList[a].NonZero
+		nzB := stateList[b].NonZero
+		if nzA < nzA {
+			return true
+		} else if nzA > nzB {
+			return false
+		} else {
+			return stateList[a].Count < stateList[b].Count
+		}
+	})
 
 	markerList := []*marker.Marker{}
 	for _, s := range stateList {

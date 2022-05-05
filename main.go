@@ -24,15 +24,27 @@ func main() {
 	rand.Seed(time0.Unix())
 
 	scores := make([]int, 300)
+	statistcs := make([][]int, 300)
+	for i := range statistcs {
+		statistcs[i] = make([]int, 100)
+	}
+	maxSel := 0
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100000; i++ {
 		game := game0
+		firstSel := -1
 		for {
 			markerList := search.Search(game.Field)
 			if len(markerList) == 0 {
 				break
 			}
 			sel := rand.Intn(len(markerList))
+			if firstSel < 0 {
+				firstSel = sel
+				if sel > maxSel {
+					maxSel = sel
+				}
+			}
 			marker := markerList[sel]
 			var err error
 			if game, err = game.Take(marker); err != nil {
@@ -44,14 +56,30 @@ func main() {
 		}
 		scores[game.Score]++
 		// showGame(game)
+		statistcs[game.Score][firstSel]++
 	}
 	time1 := time.Now()
+
+	for i, marker := range search.Search(problem.Field) {
+		fmt.Println("--------", i, "-------")
+		showFieldWithMark(problem.Field, marker)
+	}
+
+	fmt.Print("SCORE ---, COUNT -----: ")
+	for i := 0; i <= maxSel; i++ {
+		fmt.Printf("%4d", i)
+	}
+	fmt.Println()
 
 	for sc, cnt := range scores {
 		if cnt == 0 {
 			continue
 		}
-		fmt.Println("SCORE", sc, "COUNT", cnt)
+		fmt.Printf("SCORE %3d, COUNT %5d: ", sc, cnt)
+		for i := 0; i <= maxSel; i++ {
+			fmt.Printf("%4d", statistcs[sc][i])
+		}
+		fmt.Println()
 	}
 
 	fmt.Println("time", time1.Sub(time0))
