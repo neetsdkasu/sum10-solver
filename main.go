@@ -30,7 +30,9 @@ func main() {
 	}
 	maxSel := 0
 
-	for i := 0; i < 100000; i++ {
+	best := game0
+
+	for i := 0; i < 500000; i++ {
 		game := game0
 		firstSel := -1
 		for {
@@ -57,6 +59,10 @@ func main() {
 		scores[game.Score]++
 		// showGame(game)
 		statistcs[game.Score][firstSel]++
+
+		if game.Score > best.Score {
+			best = game
+		}
 	}
 	time1 := time.Now()
 
@@ -65,9 +71,9 @@ func main() {
 		showFieldWithMark(problem.Field, marker)
 	}
 
-	fmt.Print("SCORE ---, COUNT -----: ")
+	fmt.Print("SCORE ---, COUNT ------: ")
 	for i := 0; i <= maxSel; i++ {
-		fmt.Printf("%4d", i)
+		fmt.Printf("%5d", i)
 	}
 	fmt.Println()
 
@@ -75,14 +81,33 @@ func main() {
 		if cnt == 0 {
 			continue
 		}
-		fmt.Printf("SCORE %3d, COUNT %5d: ", sc, cnt)
+		fmt.Printf("SCORE %3d, COUNT %6d: ", sc, cnt)
 		for i := 0; i <= maxSel; i++ {
-			fmt.Printf("%4d", statistcs[sc][i])
+			fmt.Printf("%5d", statistcs[sc][i])
 		}
 		fmt.Println()
 	}
 
 	fmt.Println("time", time1.Sub(time0))
+
+	fmt.Println("best solution")
+	steps := []*game.Game{}
+	for best != nil {
+		steps = append(steps, best)
+		best = best.Prev
+	}
+	best = steps[0]
+	for len(steps) > 0 {
+		pos := len(steps) - 1
+		step := steps[pos]
+		steps = steps[:pos]
+		if step.Taked != nil {
+			fmt.Println("----------------------------")
+			showGameWithMark(step.Prev, step.Taked)
+		}
+	}
+	fmt.Println("----------------------------")
+	showGame(best)
 }
 
 func showField(field [][]int) {
