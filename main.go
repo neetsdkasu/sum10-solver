@@ -1,8 +1,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"io"
+	"log"
 	"math/rand"
+	"os"
 	"sum10-solver/game"
 	"sum10-solver/marker"
 	"sum10-solver/problem"
@@ -10,12 +14,72 @@ import (
 	"time"
 )
 
+func init() {
+	oldUsage := flag.Usage
+	flag.Usage = func() {
+		fmt.Println()
+		fmt.Println("SUM10 Puzzleのスコアの良さそうな解を探すプログラム")
+		fmt.Println()
+		oldUsage()
+		fmt.Println()
+		fmt.Println("SUM10 Puzzle: https://neetsdkasu.github.io/game/sum10/")
+		fmt.Println()
+	}
+}
+
 func main() {
+	var seed int
+	var withStatistics bool
 
-	problem := problem.New(5531)
+	flag.IntVar(&seed, "seed", -1, "puzzle seed (0 ～ 99999)")
+	flag.BoolVar(&withStatistics, "statistics", false, "with statistics of first step")
+	flag.Parse()
 
-	showField(problem.Field)
-	fmt.Println("-----------------------------")
+	if seed < 0 || 99999 < seed {
+		fmt.Println("seed は 0 から 99999 の範囲内の数字で指定してください")
+		flag.Usage()
+		os.Exit(2)
+		return
+	}
+
+	fileName := fmt.Sprintf("result%05d.txt", seed)
+	file, err := os.Create(fileName)
+	if err != nil {
+		log.Panic(err)
+		return
+	}
+	defer func() {
+		err = file.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+
+	if err = findGoodSolution(file, uint32(seed), withStatistics); err != nil {
+		log.Panic(err)
+		return
+	}
+
+	log.Println("save result to " + fileName)
+}
+
+func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err error) {
+	const Bar = "-----------------------------"
+
+	log.Printf("searching a solution of seed %d puzzle by random walk\n", seed)
+	log.Println("wait for tens of minutes ...")
+
+	problem := problem.New(seed)
+
+	if _, err = fmt.Fprintln(file, "SEED:", seed); err != nil {
+		return
+	}
+	if err = showField(file, problem.Field); err != nil {
+		return
+	}
+	if _, err = fmt.Fprintln(file, Bar); err != nil {
+		return
+	}
 
 	game0 := game.New(problem)
 
@@ -24,15 +88,22 @@ func main() {
 	rand.Seed(time0.Unix())
 
 	scores := make([]int, 300)
-	statistcs := make([][]int, 300)
-	for i := range statistcs {
-		statistcs[i] = make([]int, 100)
+	statistics := make([][]int, 300)
+	for i := range statistics {
+		statistics[i] = make([]int, 100)
 	}
 	maxSel := 0
 
 	best := game0
 
-	for i := 0; i < 500000; i++ {
+	const NumOfSearching = 500000
+	const Progress = NumOfSearching / 10
+
+	for i := 0; i < NumOfSearching; i++ {
+		if i%Progress == 0 {
+			dur := time.Now().Sub(time0).String()
+			log.Printf("%6d / %6d (%s)\n", i, NumOfSearching, dur)
+		}
 		game := game0
 		firstSel := -1
 		for {
@@ -48,17 +119,12 @@ func main() {
 				}
 			}
 			marker := markerList[sel]
-			var err error
 			if game, err = game.Take(marker); err != nil {
-				fmt.Println(err)
 				return
 			}
-			// showGameWithMark(game.Prev, marker)
-			// fmt.Println("-----------------------------")
 		}
 		scores[game.Score]++
-		// showGame(game)
-		statistcs[game.Score][firstSel]++
+		statistics[game.Score][firstSel]++
 
 		if game.Score > best.Score {
 			best = game
@@ -66,80 +132,178 @@ func main() {
 	}
 	time1 := time.Now()
 
-	for i, marker := range search.Search(problem.Field) {
-		fmt.Println("--------", i, "-------")
-		showFieldWithMark(problem.Field, marker)
+	if _, err = fmt.Fprintln(file, "time", time1.Sub(time0)); err != nil {
+		return
 	}
 
-	fmt.Print("SCORE ---, COUNT ------: ")
-	for i := 0; i <= maxSel; i++ {
-		fmt.Printf("%5d", i)
-	}
-	fmt.Println()
-
-	for sc, cnt := range scores {
-		if cnt == 0 {
-			continue
-		}
-		fmt.Printf("SCORE %3d, COUNT %6d: ", sc, cnt)
-		for i := 0; i <= maxSel; i++ {
-			fmt.Printf("%5d", statistcs[sc][i])
-		}
-		fmt.Println()
+	if _, err = fmt.Fprintln(file, "best solution (SCORE", best.Score, ")"); err != nil {
+		return
 	}
 
-	fmt.Println("time", time1.Sub(time0))
-
-	fmt.Println("best solution")
 	steps := []*game.Game{}
 	for best != nil {
 		steps = append(steps, best)
 		best = best.Prev
 	}
+
 	best = steps[0]
 	for len(steps) > 0 {
 		pos := len(steps) - 1
 		step := steps[pos]
 		steps = steps[:pos]
 		if step.Taked != nil {
-			fmt.Println("----------------------------")
-			showGameWithMark(step.Prev, step.Taked)
+			if _, err = fmt.Fprintln(file, Bar); err != nil {
+				return
+			}
+			if err = showGameWithMark(file, step.Prev, step.Taked); err != nil {
+				return
+			}
 		}
 	}
-	fmt.Println("----------------------------")
-	showGame(best)
+
+	if _, err = fmt.Fprintln(file, Bar); err != nil {
+		return
+	}
+
+	if err = showGame(file, best); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, Bar); err != nil {
+		return
+	}
+
+	if withStatistics {
+
+		if _, err = fmt.Fprintln(file, "STATISTICS OF FIRST STEP"); err != nil {
+			return
+		}
+
+		if _, err = fmt.Fprintln(file, Bar); err != nil {
+			return
+		}
+
+		if _, err = fmt.Fprint(file, "       FIRST STEP INDEX: "); err != nil {
+			return
+		}
+
+		for i := 0; i <= maxSel; i++ {
+			if _, err = fmt.Fprintf(file, "%5d", i); err != nil {
+				return
+			}
+		}
+		if _, err = fmt.Fprintln(file); err != nil {
+			return
+		}
+
+		if _, err = fmt.Fprint(file, "========================="); err != nil {
+			return
+		}
+
+		for i := 0; i <= maxSel; i++ {
+			if _, err = fmt.Fprint(file, "====="); err != nil {
+				return
+			}
+		}
+		if _, err = fmt.Fprintln(file); err != nil {
+			return
+		}
+
+		for sc, cnt := range scores {
+			if cnt == 0 {
+				continue
+			}
+			if _, err = fmt.Fprintf(file, "SCORE %3d, COUNT %6d: ", sc, cnt); err != nil {
+				return
+			}
+			for i := 0; i <= maxSel; i++ {
+				if _, err = fmt.Fprintf(file, "%5d", statistics[sc][i]); err != nil {
+					return
+				}
+			}
+			if _, err = fmt.Fprintln(file); err != nil {
+				return
+			}
+		}
+
+		if _, err = fmt.Fprintln(file, Bar); err != nil {
+			return
+		}
+
+		if _, err = fmt.Fprintln(file, "FIRST STEP DETAILS"); err != nil {
+			return
+		}
+
+		for i, marker := range search.Search(problem.Field) {
+			if _, err = fmt.Fprintf(file, "---------- %3d ----------\n", i); err != nil {
+				return
+			}
+			if err = showFieldWithMark(file, problem.Field, marker); err != nil {
+				return
+			}
+		}
+
+		if _, err = fmt.Fprintln(file, Bar); err != nil {
+			return
+		}
+
+	} // withStatistics
+
+	return
 }
 
-func showField(field [][]int) {
+func showField(file io.Writer, field [][]int) (err error) {
 	for _, line := range field {
 		for _, value := range line {
-			fmt.Printf(" %2d", value)
+			_, err = fmt.Fprintf(file, " %2d", value)
+			if err != nil {
+				return
+			}
 		}
-		fmt.Println()
+		_, err = fmt.Fprintln(file)
+		if err != nil {
+			return
+		}
 	}
+	return
 }
 
-func showFieldWithMark(field [][]int, marker *marker.Marker) {
+func showFieldWithMark(file io.Writer, field [][]int, marker *marker.Marker) (err error) {
 	for row, line := range field {
 		for col, value := range line {
 			if marker.Has(row, col) {
-				fmt.Printf(" *%d", value)
+				_, err = fmt.Fprintf(file, " *%d", value)
 			} else {
-				fmt.Printf(" %2d", value)
+				_, err = fmt.Fprintf(file, " %2d", value)
+			}
+			if err != nil {
+				return
 			}
 		}
-		fmt.Println()
+		_, err = fmt.Fprintln(file)
+		if err != nil {
+			return
+		}
 	}
+	return
 }
 
-func showGameWithMark(game *game.Game, marker *marker.Marker) {
-	fmt.Println("Steps:", game.Steps)
-	fmt.Println("Score:", game.Score)
-	showFieldWithMark(game.Field, marker)
+func showGameWithMark(file io.Writer, game *game.Game, marker *marker.Marker) (err error) {
+	if _, err = fmt.Fprintln(file, "Steps:", game.Steps); err != nil {
+		return
+	}
+	if _, err = fmt.Fprintln(file, "Score:", game.Score); err != nil {
+		return
+	}
+	return showFieldWithMark(file, game.Field, marker)
 }
 
-func showGame(game *game.Game) {
-	fmt.Println("Steps:", game.Steps)
-	fmt.Println("Score:", game.Score)
-	showField(game.Field)
+func showGame(file io.Writer, game *game.Game) (err error) {
+	if _, err = fmt.Fprintln(file, "Steps:", game.Steps); err != nil {
+		return
+	}
+	if _, err = fmt.Fprintln(file, "Score:", game.Score); err != nil {
+		return
+	}
+	return showField(file, game.Field)
 }
