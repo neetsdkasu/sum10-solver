@@ -100,7 +100,7 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 	best := game0
 
 	const NumOfSearching = 500000
-	const Progress = NumOfSearching / 10
+	const Progress = NumOfSearching / 50
 
 	time0 := time.Now()
 	rand.Seed(time0.Unix())
