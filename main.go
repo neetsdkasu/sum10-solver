@@ -11,6 +11,7 @@ import (
 	"sum10-solver/marker"
 	"sum10-solver/problem"
 	"sum10-solver/search"
+	_ "sum10-solver/solver/random-walk"
 	"time"
 )
 
