@@ -11,6 +11,7 @@ import (
 	"sum10-solver/marker"
 	"sum10-solver/problem"
 	"sum10-solver/search"
+	"sum10-solver/solver"
 	_ "sum10-solver/solver/random-walk"
 	"time"
 )
@@ -35,6 +36,8 @@ func main() {
 	flag.IntVar(&seed, "seed", -1, "puzzle seed (0 ～ 99999)")
 	flag.BoolVar(&withStatistics, "statistics", false, "with statistics of first step")
 	flag.Parse()
+
+	solver.Comp(nil, 10, 1)
 
 	if seed < 0 || 99999 < seed {
 		fmt.Println("seed は 0 から 99999 の範囲内の数字で指定してください")

@@ -1,17 +1,17 @@
 package solver
 
 import (
-	"context"
 	"io"
 	"log"
 	"sum10-solver/marker"
 	"sum10-solver/problem"
+	"time"
 )
 
 type Solver interface {
 	Name() string
 	Description() string
-	Search(ctx context.Context, problem *problem.Problem) []*marker.Marker
+	Search(startTime time.Time, runningSeconds int, problem *problem.Problem) []*marker.Marker
 }
 
 var (
@@ -29,7 +29,12 @@ func Register(solver Solver) {
 	uniqueSolverName[name] = true
 }
 
-func Comp(file io.Writer, runningLimitTime, numOfTestcase int) error {
-
+func Comp(file io.Writer, runningSeconds, numOfTestcase int) error {
+	problem := problem.New(5531)
+	for _, solver := range solvers {
+		log.Println("Solver:", solver.Name())
+		log.Println("Description:", solver.Description())
+		_ = solver.Search(time.Now(), runningSeconds, problem)
+	}
 	return nil
 }
