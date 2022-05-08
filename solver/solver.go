@@ -3,6 +3,7 @@ package solver
 import (
 	"io"
 	"log"
+	"sum10-solver/game"
 	"sum10-solver/marker"
 	"sum10-solver/problem"
 	"time"
@@ -34,7 +35,18 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase int) error {
 	for _, solver := range solvers {
 		log.Println("Solver:", solver.Name())
 		log.Println("Description:", solver.Description())
-		_ = solver.Search(time.Now(), runningSeconds, problem)
+		list := solver.Search(time.Now(), runningSeconds, problem)
+		cur := game.New(problem)
+		for _, step := range list {
+			var err error
+			cur, err = cur.Take(step)
+			if err != nil {
+				break
+			}
+		}
+		if cur != nil {
+			log.Println("Get Score:", cur.Score)
+		}
 	}
 	return nil
 }

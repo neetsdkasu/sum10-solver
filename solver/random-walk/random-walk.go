@@ -3,9 +3,11 @@ package randomWalk
 import (
 	"context"
 	"log"
+	"math/rand"
 	"sum10-solver/game"
 	"sum10-solver/marker"
 	"sum10-solver/problem"
+	"sum10-solver/search"
 	"sum10-solver/solver"
 	"time"
 )
@@ -31,7 +33,7 @@ func (*RandomWalk) Search(startTime time.Time, runningSeconds int, problem *prob
 	ctx, cancel := context.WithDeadline(context.Background(), deadline)
 	defer cancel()
 	var best = []*marker.Marker{}
-	ch := search(ctx, problem)
+	ch := run(ctx, problem)
 	for {
 		select {
 		case <-ctx.Done():
@@ -46,7 +48,7 @@ func (*RandomWalk) Search(startTime time.Time, runningSeconds int, problem *prob
 	}
 }
 
-func search(ctx context.Context, problem *problem.Problem) <-chan []*marker.Marker {
+func run(ctx context.Context, problem *problem.Problem) <-chan []*marker.Marker {
 	ch := make(chan []*marker.Marker, 100)
 
 	game0 := game.New(problem)
@@ -54,16 +56,46 @@ func search(ctx context.Context, problem *problem.Problem) <-chan []*marker.Mark
 	go func() {
 		defer close(ch)
 
-		_ = game0
+		rng := rand.New(rand.NewSource(time.Now().Unix()))
 
-		var hoge = []*marker.Marker{}
+		best := game0
+
 		for {
 			select {
 			case <-ctx.Done():
-				log.Println("end and not send")
+				log.Println("end and not send (front)")
 				return
-			case ch <- hoge:
-				log.Println("send")
+			default:
+			}
+			var err error = nil
+			cur := game0
+			for err == nil {
+				list := search.Search(cur.Field)
+				if len(list) == 0 {
+					break
+				}
+				sel := rng.Intn(len(list))
+				cur, err = cur.Take(list[sel])
+			}
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			if cur.Score <= best.Score {
+				continue
+			}
+			best = cur
+			steps := make([]*marker.Marker, cur.Steps)
+			for cur.Steps > 0 {
+				steps[cur.Prev.Steps] = cur.Taked
+				cur = cur.Prev
+			}
+			select {
+			case <-ctx.Done():
+				log.Println("end and not send (behind)")
+				return
+			case ch <- steps:
+				log.Println("send (SCORE", best.Score, ")")
 			}
 		}
 	}()
