@@ -12,7 +12,7 @@ import (
 type Solver interface {
 	Name() string
 	Description() string
-	Search(startTime time.Time, runningSeconds int, problem *problem.Problem) []*marker.Marker
+	Search(startTime time.Time, runningSeconds int, prob *problem.Problem) []*marker.Marker
 }
 
 var (
@@ -30,13 +30,14 @@ func Register(solver Solver) {
 	uniqueSolverName[name] = true
 }
 
-func Comp(file io.Writer, runningSeconds, numOfTestcase int) error {
-	problem := problem.New(5531)
+func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) error {
+	// 仮
+	prob := problem.New(5531)
 	for _, solver := range solvers {
 		log.Println("Solver:", solver.Name())
 		log.Println("Description:", solver.Description())
-		list := solver.Search(time.Now(), runningSeconds, problem)
-		cur := game.New(problem)
+		list := solver.Search(time.Now(), runningSeconds, prob)
+		cur := game.New(prob)
 		for _, step := range list {
 			var err error
 			cur, err = cur.Take(step)
@@ -47,6 +48,7 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase int) error {
 		if cur != nil {
 			log.Println("Get Score:", cur.Score)
 		}
+		<-time.After(time.Second)
 	}
 	return nil
 }

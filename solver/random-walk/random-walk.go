@@ -2,7 +2,6 @@ package randomWalk
 
 import (
 	"context"
-	"log"
 	"math/rand"
 	"sum10-solver/game"
 	"sum10-solver/marker"
@@ -37,21 +36,21 @@ func (*RandomWalk) Search(startTime time.Time, runningSeconds int, problem *prob
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("end of search")
 			return best
 		case sol, ok := <-ch:
 			if ok {
-				log.Println("recieved")
 				best = sol
+			} else {
+				return best
 			}
 		}
 	}
 }
 
-func run(ctx context.Context, problem *problem.Problem) <-chan []*marker.Marker {
+func run(ctx context.Context, prob *problem.Problem) <-chan []*marker.Marker {
 	ch := make(chan []*marker.Marker, 100)
 
-	game0 := game.New(problem)
+	game0 := game.New(prob)
 
 	go func() {
 		defer close(ch)
@@ -63,7 +62,6 @@ func run(ctx context.Context, problem *problem.Problem) <-chan []*marker.Marker 
 		for {
 			select {
 			case <-ctx.Done():
-				log.Println("end and not send (front)")
 				return
 			default:
 			}
@@ -78,7 +76,6 @@ func run(ctx context.Context, problem *problem.Problem) <-chan []*marker.Marker 
 				cur, err = cur.Take(list[sel])
 			}
 			if err != nil {
-				log.Println(err)
 				continue
 			}
 			if cur.Score <= best.Score {
@@ -92,10 +89,8 @@ func run(ctx context.Context, problem *problem.Problem) <-chan []*marker.Marker 
 			}
 			select {
 			case <-ctx.Done():
-				log.Println("end and not send (behind)")
 				return
 			case ch <- steps:
-				log.Println("send (SCORE", best.Score, ")")
 			}
 		}
 	}()
