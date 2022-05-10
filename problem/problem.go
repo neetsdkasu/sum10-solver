@@ -7,8 +7,16 @@ import (
 )
 
 type Problem struct {
-	Seed  uint32
-	Field [][]int
+	seed  uint32
+	field [][]int
+}
+
+func (prob *Problem) Seed() uint32 {
+	return prob.seed
+}
+
+func (prob *Problem) Get(row, col int) int {
+	return prob.field[row][col]
 }
 
 func New(seed uint32) *Problem {
@@ -28,7 +36,7 @@ func New(seed uint32) *Problem {
 		}
 	}
 	return &Problem{
-		Seed:  seed,
-		Field: field,
+		seed:  seed,
+		field: field,
 	}
 }

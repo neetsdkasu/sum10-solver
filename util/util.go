@@ -15,6 +15,10 @@ const (
 	NoSeed  = -1
 )
 
+type FieldViewer interface {
+	Get(row, col int) int
+}
+
 func IsValidSeed(seed int) bool {
 	return MinSeed <= seed && seed <= MaxSeed
 }

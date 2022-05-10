@@ -16,20 +16,28 @@ type Game struct {
 	Taked   *marker.Marker
 }
 
-func New(problem *problem.Problem) *Game {
-	if problem == nil {
+func New(prob *problem.Problem) *Game {
+	if prob == nil {
 		return nil
 	}
 	field := util.MakeEmptyField[int]()
-	util.CopyField(field, problem.Field)
+	for row := 0; row < util.RowCount; row++ {
+		for col := 0; col < util.ColCount; col++ {
+			field[row][col] = prob.Get(row, col)
+		}
+	}
 	return &Game{
-		Problem: problem,
+		Problem: prob,
 		Steps:   0,
 		Score:   0,
 		Field:   field,
 		Prev:    nil,
 		Taked:   nil,
 	}
+}
+
+func (game *Game) Get(row, col int) int {
+	return game.Field[row][col]
 }
 
 func Copy(dst, src *Game) {

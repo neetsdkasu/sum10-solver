@@ -17,7 +17,7 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 	log.Printf("searching solutions of seed %d puzzle by random walk\n", seed)
 	log.Println("wait for tens of minutes ...")
 
-	problem := problem.New(seed)
+	prob := problem.New(seed)
 
 	if _, err = fmt.Fprintln(file, "SEED:", seed); err != nil {
 		return
@@ -26,16 +26,16 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 		return
 	}
 
-	if err = showField(file, problem.Field); err != nil {
+	if err = showField(file, prob); err != nil {
 		return
 	}
 	if _, err = fmt.Fprintln(file, Bar); err != nil {
 		return
 	}
 
-	game0 := game.New(problem)
+	game0 := game.New(prob)
 
-	numOfFirstStep := len(search.Search(problem.Field))
+	numOfFirstStep := len(search.Search(prob))
 
 	scores := make([]int, 400)
 	statistics := make([][]int, 400)
@@ -58,10 +58,10 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 			dur := time.Now().Sub(time0).String()
 			log.Printf("%6d / %6d (%s)\n", i, NumOfSearching, dur)
 		}
-		game := game0
+		cur := game0
 		firstSel := -1
 		for {
-			markerList := search.Search(game.Field)
+			markerList := search.Search(cur)
 			if len(markerList) == 0 {
 				break
 			}
@@ -72,16 +72,16 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 					maxSel = sel
 				}
 			}
-			marker := markerList[sel]
-			if game, err = game.Take(marker); err != nil {
+			target := markerList[sel]
+			if cur, err = cur.Take(target); err != nil {
 				return
 			}
 		}
-		scores[game.Score]++
-		statistics[game.Score][firstSel]++
+		scores[cur.Score]++
+		statistics[cur.Score][firstSel]++
 
-		if game.Score > best.Score {
-			best = game
+		if cur.Score > best.Score {
+			best = cur
 		}
 	}
 	time1 := time.Now()
@@ -314,11 +314,11 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 			return
 		}
 
-		for i, marker := range search.Search(problem.Field) {
+		for i, marker := range search.Search(prob) {
 			if _, err = fmt.Fprintf(file, "---------- %3d ----------\n", i); err != nil {
 				return
 			}
-			if err = showFieldWithMark(file, problem.Field, marker); err != nil {
+			if err = showFieldWithMark(file, prob, marker); err != nil {
 				return
 			}
 		}

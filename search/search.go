@@ -8,14 +8,15 @@ import (
 
 // いずれも8x8の64マスが前提の処理
 
-func Search(field [][]int) []*marker.Marker {
+func Search(field util.FieldViewer) []*marker.Marker {
 
 	stateList := []*state{}
 
 	// 8x8の64マスに0～9の数字が均等に散らばっていることが前提の処理
 	// (仮に前提が崩れて全マスが0だったら組み合わせ爆発が起こる)
-	for row, line := range field {
-		for col, value := range line {
+	for row := 0; row < util.RowCount; row++ {
+		for col := 0; col < util.ColCount; col++ {
+			value := field.Get(row, col)
 			if value == util.Hole || value == util.Obstacle {
 				continue
 			}

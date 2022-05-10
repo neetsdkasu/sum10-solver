@@ -68,7 +68,7 @@ func run(ctx context.Context, prob *problem.Problem) <-chan []*marker.Marker {
 			var err error = nil
 			cur := game0
 			for err == nil {
-				list := search.Search(cur.Field)
+				list := search.Search(cur)
 				if len(list) == 0 {
 					break
 				}

@@ -5,11 +5,13 @@ import (
 	"io"
 	"sum10-solver/game"
 	"sum10-solver/marker"
+	"sum10-solver/util"
 )
 
-func showField(file io.Writer, field [][]int) (err error) {
-	for _, line := range field {
-		for _, value := range line {
+func showField(file io.Writer, field util.FieldViewer) (err error) {
+	for row := 0; row < util.RowCount; row++ {
+		for col := 0; col < util.ColCount; col++ {
+			value := field.Get(row, col)
 			_, err = fmt.Fprintf(file, " %2d", value)
 			if err != nil {
 				return
@@ -23,9 +25,10 @@ func showField(file io.Writer, field [][]int) (err error) {
 	return
 }
 
-func showFieldWithMark(file io.Writer, field [][]int, marker *marker.Marker) (err error) {
-	for row, line := range field {
-		for col, value := range line {
+func showFieldWithMark(file io.Writer, field util.FieldViewer, marker *marker.Marker) (err error) {
+	for row := 0; row < util.RowCount; row++ {
+		for col := 0; col < util.ColCount; col++ {
+			value := field.Get(row, col)
 			if marker.Has(row, col) {
 				_, err = fmt.Fprintf(file, " *%d", value)
 			} else {
@@ -50,7 +53,7 @@ func showGameWithMark(file io.Writer, game *game.Game, marker *marker.Marker) (e
 	if _, err = fmt.Fprintln(file, "Score:", game.Score); err != nil {
 		return
 	}
-	return showFieldWithMark(file, game.Field, marker)
+	return showFieldWithMark(file, game, marker)
 }
 
 func showGame(file io.Writer, game *game.Game) (err error) {
@@ -60,5 +63,5 @@ func showGame(file io.Writer, game *game.Game) (err error) {
 	if _, err = fmt.Fprintln(file, "Score:", game.Score); err != nil {
 		return
 	}
-	return showField(file, game.Field)
+	return showField(file, game)
 }
