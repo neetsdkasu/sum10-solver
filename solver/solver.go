@@ -3,9 +3,9 @@ package solver
 import (
 	"io"
 	"log"
-	"sum10-solver/game"
 	"sum10-solver/marker"
 	"sum10-solver/problem"
+	"sum10-solver/util"
 	"time"
 )
 
@@ -31,7 +31,16 @@ func Register(solver Solver) {
 }
 
 func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) error {
-	// 仮
+	if util.IsValidSeed(seed) {
+		return compSpecialSeed(file, runningSeconds, numOfTestcase, seed)
+	} else {
+		return compRandomTestcases(file, runningSeconds, runningSeconds)
+	}
+}
+
+/*
+
+    // 仮
 	prob := problem.New(5531)
 	for _, solver := range solvers {
 		log.Println("Solver:", solver.Name())
@@ -51,4 +60,5 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) error {
 		<-time.After(time.Second)
 	}
 	return nil
-}
+
+*/
