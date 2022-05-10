@@ -45,6 +45,16 @@ const (
 	argNumOfTestcase = "compsize"
 )
 
+const (
+	MinLimitSeconds     = 1
+	MaxLimitSeconds     = 60
+	DefaultLimitSeconds = 10
+
+	MinNumOfTestcase     = 1
+	MaxNumOfTestcase     = 100
+	DefaultNumOfTestcase = 10
+)
+
 func parseArgs() *Args {
 	args := &Args{}
 
@@ -56,11 +66,11 @@ func parseArgs() *Args {
 
 	flag.BoolVar(&args.compMode, argCompMode, false, "compモードで実行")
 
-	flag.IntVar(&args.compLimitSeconds, argLimitSeconds, util.DefaultLimitSeconds,
-		fmt.Sprint("各ソルバがテストケースごとに使ってよい最大時間(秒) (", util.MinLimitSeconds, " ～ ", util.MaxLimitSeconds, ") [compモード]"))
+	flag.IntVar(&args.compLimitSeconds, argLimitSeconds, DefaultLimitSeconds,
+		fmt.Sprint("各ソルバがテストケースごとに使ってよい最大時間(秒) (", MinLimitSeconds, " ～ ", MaxLimitSeconds, ") [compモード]"))
 
-	flag.IntVar(&args.compNumOfTestcase, argNumOfTestcase, util.DefaultNumOfTestcase,
-		fmt.Sprint("使用するテストケースの数 (", util.MinNumOfTestcase, " ～ ", util.MaxNumOfTestcase, ") [compモード]"))
+	flag.IntVar(&args.compNumOfTestcase, argNumOfTestcase, DefaultNumOfTestcase,
+		fmt.Sprint("使用するテストケースの数 (", MinNumOfTestcase, " ～ ", MaxNumOfTestcase, ") [compモード]"))
 
 	flag.Parse()
 
@@ -83,15 +93,15 @@ func (args *Args) validateNormalMode() {
 }
 
 func (args *Args) validateCompMode() {
-	if !util.IsValidLimitSeconds(args.compLimitSeconds) {
-		fmt.Println(argLimitSeconds, "は", util.MinLimitSeconds, "から", util.MaxLimitSeconds, "の範囲内の数字で指定してください")
+	if !isValidLimitSeconds(args.compLimitSeconds) {
+		fmt.Println(argLimitSeconds, "は", MinLimitSeconds, "から", MaxLimitSeconds, "の範囲内の数字で指定してください")
 		flag.Usage()
 		os.Exit(InvalidArgumentExitCode)
 		return
 	}
 
-	if !util.IsValidNumOfTestcase(args.compNumOfTestcase) {
-		fmt.Println(argNumOfTestcase, "は", util.MinNumOfTestcase, "から", util.MaxNumOfTestcase, "の範囲内の数字で指定してください")
+	if !isValidNumOfTestcase(args.compNumOfTestcase) {
+		fmt.Println(argNumOfTestcase, "は", MinNumOfTestcase, "から", MaxNumOfTestcase, "の範囲内の数字で指定してください")
 		flag.Usage()
 		os.Exit(InvalidArgumentExitCode)
 		return
@@ -107,4 +117,14 @@ func (args *Args) validateCompMode() {
 	if !util.IsValidSeed(args.seed) {
 		args.seed = util.NoSeed
 	}
+}
+
+func isValidLimitSeconds(limitSeconds int) bool {
+	return MinLimitSeconds <= limitSeconds &&
+		limitSeconds <= MaxLimitSeconds
+}
+
+func isValidNumOfTestcase(numOfTestcase int) bool {
+	return MinNumOfTestcase <= numOfTestcase &&
+		numOfTestcase <= MaxNumOfTestcase
 }

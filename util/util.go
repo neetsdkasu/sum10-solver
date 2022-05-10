@@ -13,28 +13,10 @@ const (
 	MinSeed = 0
 	MaxSeed = 99999
 	NoSeed  = -1
-
-	MinLimitSeconds     = 1
-	MaxLimitSeconds     = 60
-	DefaultLimitSeconds = 10
-
-	MinNumOfTestcase     = 1
-	MaxNumOfTestcase     = 100
-	DefaultNumOfTestcase = 10
 )
 
 func IsValidSeed(seed int) bool {
 	return MinSeed <= seed && seed <= MaxSeed
-}
-
-func IsValidLimitSeconds(limitSeconds int) bool {
-	return MinLimitSeconds <= limitSeconds &&
-		limitSeconds <= MaxLimitSeconds
-}
-
-func IsValidNumOfTestcase(numOfTestcase int) bool {
-	return MinNumOfTestcase <= numOfTestcase &&
-		numOfTestcase <= MaxNumOfTestcase
 }
 
 func FieldContains(row, col int) bool {
