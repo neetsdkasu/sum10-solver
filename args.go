@@ -41,13 +41,13 @@ const (
 	argSeed          = "seed"
 	argStatistics    = "statistics"
 	argCompMode      = "comp"
-	argLimitSeconds  = "compsec"
+	argLimitSeconds  = "comptime"
 	argNumOfTestcase = "compsize"
 )
 
 const (
 	MinLimitSeconds     = 1
-	MaxLimitSeconds     = 60
+	MaxLimitSeconds     = 300
 	DefaultLimitSeconds = 5
 
 	MinNumOfTestcase     = 1

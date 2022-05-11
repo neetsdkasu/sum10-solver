@@ -5,8 +5,18 @@ import (
 	"log"
 	"os"
 	"sum10-solver/solver"
-	_ "sum10-solver/solver/random-walk"
 	"sum10-solver/util"
+)
+
+// list up solvers
+import (
+	_ "sum10-solver/solver/random-walk"
+
+	_ "sum10-solver/solver/lots-of-choices-greedy"
+
+	_ "sum10-solver/solver/fewer-choices-greedy"
+
+	_ "sum10-solver/solver/middle-choices-greedy"
 )
 
 func runComp(limitSeconds, numOfTestcase, seed int) (err error) {

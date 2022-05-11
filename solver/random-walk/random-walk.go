@@ -12,7 +12,7 @@ import (
 
 type RandomWalk struct{}
 
-var randomWalk = RandomWalk{}
+var randomWalk RandomWalk
 
 func init() {
 	solver.Register(randomWalk)
@@ -26,12 +26,12 @@ func (RandomWalk) Description() string {
 	return "時間いっぱいにランダムな解を大量に生成して一番スコアがよいものを選ぶ"
 }
 
-func (RandomWalk) Search(startTime time.Time, runningSeconds int, problem *problem.Problem) (solver.Solution, error) {
+func (RandomWalk) Search(startTime time.Time, runningSeconds int, prob *problem.Problem) (solver.Solution, error) {
 	deadline := startTime.Add(time.Duration(int64(runningSeconds)) * time.Second)
 	ctx, cancel := context.WithDeadline(context.Background(), deadline)
 	defer cancel()
-	var best = solver.Solution{}
-	ch := run(ctx, problem)
+	var best solver.Solution
+	ch := run(ctx, prob)
 	for {
 		select {
 		case <-ctx.Done():
