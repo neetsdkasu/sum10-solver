@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sum10-solver/solver"
 	"sum10-solver/util"
 )
 
@@ -64,7 +65,8 @@ func parseArgs() *Args {
 	flag.BoolVar(&args.withStatistics, argStatistics, false,
 		"出力ファイルに初手の選択と最終スコアの関係の統計情報を含めます [通常モード]")
 
-	flag.BoolVar(&args.compMode, argCompMode, false, "compモードで実行")
+	flag.BoolVar(&args.compMode, argCompMode, false,
+		fmt.Sprint("compモードで実行 (ソルバ数: ", solver.Count(), ")"))
 
 	flag.IntVar(&args.compLimitSeconds, argLimitSeconds, DefaultLimitSeconds,
 		fmt.Sprint("各ソルバがテストケースごとに使ってよい最大時間(秒) (", MinLimitSeconds, " ～ ", MaxLimitSeconds, ") [compモード]"))

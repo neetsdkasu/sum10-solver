@@ -24,6 +24,10 @@ var (
 	uniqueSolverName = make(map[string]bool)
 )
 
+func Count() int {
+	return len(solvers)
+}
+
 func Register(solver Solver) {
 	name := solver.Name()
 	if _, ok := uniqueSolverName[name]; ok {
