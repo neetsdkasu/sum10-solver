@@ -3,6 +3,8 @@ package solver
 import (
 	"io"
 	"log"
+	"math/rand"
+	"sort"
 	"sum10-solver/marker"
 	"sum10-solver/problem"
 	"sum10-solver/util"
@@ -31,11 +33,28 @@ func Register(solver Solver) {
 }
 
 func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) error {
+	seedList := make([]int, numOfTestcase)
 	if util.IsValidSeed(seed) {
-		return compSpecialSeed(file, runningSeconds, numOfTestcase, seed)
+		for i := range seedList {
+			seedList[i] = seed
+		}
 	} else {
-		return compRandomTestcases(file, runningSeconds, runningSeconds)
+		rand.Seed(time.Now().Unix())
+		set := make(map[int]bool)
+		for i := range seedList {
+			for {
+				seed = rand.Intn(util.MaxSeed - util.MinSeed + 1)
+				if _, ok := set[seed]; !ok {
+					set[seed] = true
+					break
+				}
+			}
+			seedList[i] = seed
+		}
+		sort.Ints(seedList)
 	}
+
+	return nil
 }
 
 /*
