@@ -168,12 +168,14 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 				if _, err = fmt.Fprint(file, "  ---"); err != nil {
 					return
 				}
-			} else {
-				score := 0
-				if result[k].IsValid() {
-					score = result[k].Game.Score
-				}
+			} else if result[k].IsValid() {
+				score := result[k].Game.Score
 				if _, err = fmt.Fprintf(file, "  %3d", score); err != nil {
+					return
+				}
+			} else {
+				// 解が正しくない （合計が10にならない、連結でない、など）
+				if _, err = fmt.Fprint(file, "  BAD"); err != nil {
 					return
 				}
 			}
