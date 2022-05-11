@@ -103,8 +103,8 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 		steps = append(steps, best)
 		best = best.Prev
 	}
-
 	best = steps[0]
+
 	for len(steps) > 0 {
 		pos := len(steps) - 1
 		step := steps[pos]

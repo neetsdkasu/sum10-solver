@@ -48,7 +48,7 @@ const (
 const (
 	MinLimitSeconds     = 1
 	MaxLimitSeconds     = 60
-	DefaultLimitSeconds = 10
+	DefaultLimitSeconds = 5
 
 	MinNumOfTestcase     = 1
 	MaxNumOfTestcase     = 100
