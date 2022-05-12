@@ -18,8 +18,9 @@ const Progress = NumOfSearching / 50
 func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err error) {
 	const Bar = "---------------------------------------------------------------------------------------"
 
-	log.Printf("SUM10パズルのSEED=%dのランダム解を大量に生成し、その中からスコアの一番高い解を見つけます\n", seed)
-	log.Println("この作業には数十分以上の時間がかかります")
+	println(fmt.Sprintf("SUM10パズルのSEED=%dに対するランダム解を大量に生成し、その中からスコアの一番高い解を見つけます", seed))
+	println("この作業には数十分以上の時間がかかります")
+	log.Println("開始します")
 
 	prob := problem.New(seed)
 
@@ -56,10 +57,6 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 	rand.Seed(time0.Unix())
 
 	for i := 0; i < NumOfSearching; i++ {
-		if i%Progress == 0 {
-			dur := time.Now().Sub(time0).String()
-			log.Printf("%6d / %6d (%s)\n", i, NumOfSearching, dur)
-		}
 		cur := game0
 		firstSel := -1
 		for {
@@ -84,6 +81,11 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 
 		if cur.Score > best.Score {
 			best = cur
+		}
+
+		if i%Progress == 0 {
+			dur := time.Now().Sub(time0).String()
+			log.Printf("%6d / %6d (%s)\n", i+1, NumOfSearching, dur)
 		}
 	}
 	time1 := time.Now()
@@ -255,8 +257,14 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 					break
 				}
 			}
-			if _, err = fmt.Fprintf(file, "%5d", minScore); err != nil {
-				return
+			if minScore == 9999 {
+				if _, err = fmt.Fprint(file, "  ---"); err != nil {
+					return
+				}
+			} else {
+				if _, err = fmt.Fprintf(file, "%5d", minScore); err != nil {
+					return
+				}
 			}
 		}
 		if _, err = fmt.Fprintln(file); err != nil {
@@ -270,14 +278,20 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 		}
 
 		for i := 0; i <= maxSel; i++ {
-			maxScore := 0
+			maxScore := -1
 			for sc, line := range statistics {
 				if line[i] > 0 {
 					maxScore = sc
 				}
 			}
-			if _, err = fmt.Fprintf(file, "%5d", maxScore); err != nil {
-				return
+			if maxScore < 0 {
+				if _, err = fmt.Fprint(file, "  ---"); err != nil {
+					return
+				}
+			} else {
+				if _, err = fmt.Fprintf(file, "%5d", maxScore); err != nil {
+					return
+				}
 			}
 		}
 		if _, err = fmt.Fprintln(file); err != nil {
@@ -297,12 +311,16 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 				total += line[i]
 				score += uint64(sc) * uint64(line[i])
 			}
-			var average uint64
 			if total > 0 {
-				average = score / uint64(total)
-			}
-			if _, err = fmt.Fprintf(file, "%5d", average); err != nil {
-				return
+				average := score / uint64(total)
+
+				if _, err = fmt.Fprintf(file, "%5d", average); err != nil {
+					return
+				}
+			} else {
+				if _, err = fmt.Fprint(file, "  ---"); err != nil {
+					return
+				}
 			}
 		}
 		if _, err = fmt.Fprintln(file); err != nil {

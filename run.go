@@ -29,7 +29,7 @@ func run(seed int, withStatistics bool) (err error) {
 		return
 	}
 
-	log.Println("save result to " + fileName)
+	log.Println("結果を", fileName, "に保存しました")
 
 	return
 }
