@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-const NumOfSearching = 500000
+const NumOfSearching = 5000 // 500000
 const Progress = NumOfSearching / 50
 
 func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err error) {
@@ -111,6 +111,12 @@ func (this *SolWriter) Search() {
 	rand.Seed(time0.Unix())
 
 	for i := 0; i < NumOfSearching; i++ {
+
+		if i%Progress == 0 {
+			dur := time.Now().Sub(time0).String()
+			log.Printf("%6d / %6d (%s)\n", i, NumOfSearching, dur)
+		}
+
 		cur := game0
 		firstSel := -1
 		for {
@@ -135,11 +141,6 @@ func (this *SolWriter) Search() {
 
 		if cur.Score > best.Score {
 			best = cur
-		}
-
-		if i%Progress == 0 {
-			dur := time.Now().Sub(time0).String()
-			log.Printf("%6d / %6d (%s)\n", i+1, NumOfSearching, dur)
 		}
 	}
 	time1 := time.Now()
@@ -214,6 +215,7 @@ func (this *SolWriter) Statistics() {
 	this.MinScore()
 	this.MaxScore()
 	this.AverageScore()
+	this.ModeScore()
 	this.Bar()
 	this.FirstSteps()
 	this.Bar()
@@ -222,6 +224,8 @@ func (this *SolWriter) Statistics() {
 	this.MaxScoreMap()
 	this.Bar()
 	this.AverageScoreMap()
+	this.Bar()
+	this.ModeScoreMap()
 	this.Bar()
 }
 
@@ -317,6 +321,41 @@ func (this *SolWriter) Total() {
 			total += line[i]
 		}
 		_, this.err = fmt.Fprintf(file, "%5d", total)
+		if this.err != nil {
+			return
+		}
+	}
+
+	_, this.err = fmt.Fprintln(file)
+}
+
+func (this *SolWriter) ModeScore() {
+	if this.err != nil {
+		return
+	}
+	file := this.file
+	maxSel := this.maxSel
+	statistics := this.statistics
+
+	_, this.err = fmt.Fprint(file, "             MODE SCORE: ")
+	if this.err != nil {
+		return
+	}
+
+	for i := 0; i <= maxSel; i++ {
+		modeScore := -1
+		count := 0
+		for sc, line := range statistics {
+			if line[i] > count {
+				modeScore = sc
+				count = line[i]
+			}
+		}
+		if modeScore == -1 {
+			_, this.err = fmt.Fprint(file, "  ---")
+		} else {
+			_, this.err = fmt.Fprintf(file, "%5d", modeScore)
+		}
 		if this.err != nil {
 			return
 		}
@@ -592,6 +631,66 @@ func (this *SolWriter) AverageScoreMap() {
 				_, this.err = fmt.Fprintf(file, " %5.1f", value)
 			} else {
 				_, this.err = fmt.Fprint(file, " ---.-")
+			}
+			if this.err != nil {
+				return
+			}
+		}
+		_, this.err = fmt.Fprintln(file)
+		if this.err != nil {
+			return
+		}
+	}
+}
+
+func (this *SolWriter) ModeScoreMap() {
+	if this.err != nil {
+		return
+	}
+	statistics := this.statistics
+	file := this.file
+	firstSteps := this.firstSteps
+
+	_, this.err = fmt.Fprintln(file, "FIRST STEP MODE SCORE MAP")
+	if this.err != nil {
+		return
+	}
+
+	scoreField := make([][][]int, 400)
+	for sc := range scoreField {
+		scoreField[sc] = util.MakeEmptyField[int]()
+		util.FillField(scoreField[sc], -1)
+	}
+
+	for sc, cnts := range statistics {
+		for i, step := range firstSteps {
+			if cnts[i] == 0 {
+				continue
+			}
+			for row := 0; row < util.RowCount; row++ {
+				for col := 0; col < util.ColCount; col++ {
+					if step.Has(row, col) {
+						scoreField[sc][row][col] += cnts[i]
+					}
+				}
+			}
+		}
+	}
+
+	for row := 0; row < util.RowCount; row++ {
+		for col := 0; col < util.ColCount; col++ {
+			score := 0
+			count := 0
+			for sc, field := range scoreField {
+				if field[row][col] > count {
+					score = sc
+					count = field[row][col]
+				}
+			}
+			if count == 0 {
+				_, this.err = fmt.Fprint(file, " ---")
+			} else {
+				_, this.err = fmt.Fprintf(file, "%4d", score)
 			}
 			if this.err != nil {
 				return
