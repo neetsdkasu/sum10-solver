@@ -25,6 +25,10 @@ func run(seed int, withStatistics bool) (err error) {
 		}
 	}()
 
+	println(fmt.Sprintf("SUM10パズルのSEED=%dに対するランダム解を大量に生成し、その中からスコアの一番高い解を見つけます", seed))
+	println("この作業には数十分以上の時間がかかります")
+	log.Println("開始します")
+
 	if err = findGoodSolution(file, uint32(seed), withStatistics); err != nil {
 		return
 	}

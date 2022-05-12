@@ -6,41 +6,95 @@ import (
 	"log"
 	"math/rand"
 	"sum10-solver/game"
+	"sum10-solver/marker"
 	"sum10-solver/problem"
 	"sum10-solver/search"
 	"sum10-solver/util"
 	"time"
 )
 
-const NumOfSearching = 500000
+const NumOfSearching = 50 // 500000
 const Progress = NumOfSearching / 50
 
 func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err error) {
+	sw := NewSolWriter(file, seed)
+	sw.Seed()
+	sw.Bar()
+	sw.Problem()
+	sw.Bar()
+	sw.Search()
+	sw.Time()
+	sw.Bar()
+	sw.Solution()
+	sw.Bar()
+	sw.Best()
+	sw.Bar()
+	if withStatistics {
+		sw.Statistics()
+	}
+	return sw.Error()
+}
+
+type SolWriter struct {
+	err        error
+	file       io.Writer
+	prob       *problem.Problem
+	firstSteps []*marker.Marker
+	best       *game.Game
+	maxSel     int
+	statistics [][]int
+	scores     []int
+	time       time.Duration
+}
+
+func NewSolWriter(file io.Writer, seed uint32) *SolWriter {
+	writer := &SolWriter{}
+	writer.file = file
+	writer.prob = problem.New(seed)
+	return writer
+}
+
+func (this *SolWriter) Error() error {
+	return this.err
+}
+
+func (this *SolWriter) Bar() {
+	if this.err != nil {
+		return
+	}
 	const Bar = "---------------------------------------------------------------------------------------"
+	_, this.err = fmt.Fprintln(this.file, Bar)
+}
 
-	println(fmt.Sprintf("SUM10パズルのSEED=%dに対するランダム解を大量に生成し、その中からスコアの一番高い解を見つけます", seed))
-	println("この作業には数十分以上の時間がかかります")
-	log.Println("開始します")
-
-	prob := problem.New(seed)
-
-	if _, err = fmt.Fprintln(file, "SEED:", seed); err != nil {
+func (this *SolWriter) Seed() {
+	if this.err != nil {
 		return
 	}
-	if _, err = fmt.Fprintln(file, Bar); err != nil {
+	_, this.err = fmt.Fprintln(this.file, "SEED:", this.prob.Seed())
+}
+
+func (this *SolWriter) Problem() {
+	if this.err != nil {
+		return
+	}
+	this.err = showField(this.file, this.prob)
+}
+
+func (this *SolWriter) Time() {
+	if this.err != nil {
+		return
+	}
+	_, this.err = fmt.Fprintln(this.file, "TIME:", this.time)
+}
+
+func (this *SolWriter) Search() {
+	if this.err != nil {
 		return
 	}
 
-	if err = showField(file, prob); err != nil {
-		return
-	}
-	if _, err = fmt.Fprintln(file, Bar); err != nil {
-		return
-	}
+	game0 := game.New(this.prob)
 
-	game0 := game.New(prob)
-
-	firstSteps := search.Search(prob)
+	firstSteps := search.Search(this.prob)
 	numOfFirstStep := len(firstSteps)
 
 	scores := make([]int, 400)
@@ -72,7 +126,7 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 				}
 			}
 			target := markerList[sel]
-			if cur, err = cur.Take(target); err != nil {
+			if cur, this.err = cur.Take(target); this.err != nil {
 				return
 			}
 		}
@@ -90,15 +144,22 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 	}
 	time1 := time.Now()
 
-	if _, err = fmt.Fprintln(file, "TIME:", time1.Sub(time0)); err != nil {
+	this.maxSel = maxSel
+	this.best = best
+	this.time = time1.Sub(time0)
+	this.statistics = statistics
+	this.scores = scores
+	this.firstSteps = firstSteps
+}
+
+func (this *SolWriter) Solution() {
+	if this.err != nil {
 		return
 	}
+	best := this.best
 
-	if _, err = fmt.Fprintln(file, Bar); err != nil {
-		return
-	}
-
-	if _, err = fmt.Fprintln(file, "BEST SOLUTION (SCORE", best.Score, ")"); err != nil {
+	_, this.err = fmt.Fprintln(this.file, "BEST SOLUTION (SCORE", best.Score, ")")
+	if this.err != nil {
 		return
 	}
 
@@ -114,387 +175,431 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 		step := steps[pos]
 		steps = steps[:pos]
 		if step.Taked != nil {
-			if _, err = fmt.Fprintln(file, Bar); err != nil {
+			this.Bar()
+			if this.err != nil {
 				return
 			}
-			if err = showGameWithMark(file, step.Prev, step.Taked); err != nil {
+			this.err = showGameWithMark(this.file, step.Prev, step.Taked)
+			if this.err != nil {
 				return
 			}
 		}
 	}
+}
 
-	if _, err = fmt.Fprintln(file, Bar); err != nil {
+func (this *SolWriter) Best() {
+	if this.err != nil {
+		return
+	}
+	this.err = showGame(this.file, this.best)
+}
+
+func (this *SolWriter) Statistics() {
+	if this.err != nil {
 		return
 	}
 
-	if err = showGame(file, best); err != nil {
+	_, this.err = fmt.Fprintln(this.file, "STATISTICS OF FIRST STEP")
+	if this.err != nil {
 		return
 	}
 
-	if _, err = fmt.Fprintln(file, Bar); err != nil {
+	this.Bar()
+	this.Indexes()
+	this.TableBar()
+	this.CountTable()
+	this.TableBar()
+	this.Total()
+	this.TableBar()
+	this.MinScore()
+	this.MaxScore()
+	this.AverageScore()
+	this.Bar()
+	this.FirstSteps()
+	this.Bar()
+	this.MinScoreMap()
+	this.Bar()
+	this.MaxScoreMap()
+	this.Bar()
+	this.AverageScoreMap()
+	this.Bar()
+}
+
+func (this *SolWriter) Indexes() {
+	if this.err != nil {
+		return
+	}
+	maxSel := this.maxSel
+
+	_, this.err = fmt.Fprint(this.file, "       FIRST STEP INDEX: ")
+	if this.err != nil {
 		return
 	}
 
-	if withStatistics {
-
-		if _, err = fmt.Fprintln(file, "STATISTICS OF FIRST STEP"); err != nil {
+	for i := 0; i <= maxSel; i++ {
+		_, this.err = fmt.Fprintf(this.file, "%5d", i)
+		if this.err != nil {
 			return
 		}
+	}
 
-		if _, err = fmt.Fprintln(file, Bar); err != nil {
+	_, this.err = fmt.Fprintln(this.file)
+}
+
+func (this *SolWriter) TableBar() {
+	if this.err != nil {
+		return
+	}
+	file := this.file
+	maxSel := this.maxSel
+
+	_, this.err = fmt.Fprint(file, "=========================")
+	if this.err != nil {
+		return
+	}
+
+	for i := 0; i <= maxSel; i++ {
+		_, this.err = fmt.Fprint(file, "=====")
+		if this.err != nil {
 			return
 		}
+	}
 
-		/*  *  *  *  *  *  *  *  *  *  *  */
+	_, this.err = fmt.Fprintln(file)
+}
 
-		if _, err = fmt.Fprint(file, "       FIRST STEP INDEX: "); err != nil {
+func (this *SolWriter) CountTable() {
+	if this.err != nil {
+		return
+	}
+	file := this.file
+	maxSel := this.maxSel
+	scores := this.scores
+	statistics := this.statistics
+
+	for sc, cnt := range scores {
+		if cnt == 0 {
+			continue
+		}
+		_, this.err = fmt.Fprintf(file, "SCORE %3d, COUNT %6d: ", sc, cnt)
+		if this.err != nil {
 			return
 		}
-
 		for i := 0; i <= maxSel; i++ {
-			if _, err = fmt.Fprintf(file, "%5d", i); err != nil {
+			_, this.err = fmt.Fprintf(file, "%5d", statistics[sc][i])
+			if this.err != nil {
 				return
 			}
 		}
-		if _, err = fmt.Fprintln(file); err != nil {
+		_, this.err = fmt.Fprintln(file)
+		if this.err != nil {
 			return
 		}
+	}
+}
 
-		/*  *  *  *  *  *  *  *  *  *  *  */
+func (this *SolWriter) Total() {
+	if this.err != nil {
+		return
+	}
+	file := this.file
+	maxSel := this.maxSel
+	statistics := this.statistics
 
-		if _, err = fmt.Fprint(file, "========================="); err != nil {
+	_, this.err = fmt.Fprint(file, "                  TOTAL: ")
+	if this.err != nil {
+		return
+	}
+
+	for i := 0; i <= maxSel; i++ {
+		total := 0
+		for _, line := range statistics {
+			total += line[i]
+		}
+		_, this.err = fmt.Fprintf(file, "%5d", total)
+		if this.err != nil {
 			return
 		}
+	}
 
-		for i := 0; i <= maxSel; i++ {
-			if _, err = fmt.Fprint(file, "====="); err != nil {
+	_, this.err = fmt.Fprintln(file)
+}
+
+func (this *SolWriter) MinScore() {
+	if this.err != nil {
+		return
+	}
+	file := this.file
+	maxSel := this.maxSel
+	statistics := this.statistics
+
+	_, this.err = fmt.Fprint(file, "              MIN SCORE: ")
+	if this.err != nil {
+		return
+	}
+
+	for i := 0; i <= maxSel; i++ {
+		minScore := 9999
+		for sc, line := range statistics {
+			if line[i] > 0 {
+				minScore = sc
+				break
+			}
+		}
+		if minScore == 9999 {
+			_, this.err = fmt.Fprint(file, "  ---")
+		} else {
+			_, this.err = fmt.Fprintf(file, "%5d", minScore)
+		}
+		if this.err != nil {
+			return
+		}
+	}
+
+	_, this.err = fmt.Fprintln(file)
+}
+
+func (this *SolWriter) MaxScore() {
+	if this.err != nil {
+		return
+	}
+	file := this.file
+	maxSel := this.maxSel
+	statistics := this.statistics
+
+	_, this.err = fmt.Fprint(file, "              MAX SCORE: ")
+	if this.err != nil {
+		return
+	}
+
+	for i := 0; i <= maxSel; i++ {
+		maxScore := -1
+		for sc, line := range statistics {
+			if line[i] > 0 {
+				maxScore = sc
+			}
+		}
+		if maxScore < 0 {
+			_, this.err = fmt.Fprint(file, "  ---")
+		} else {
+			_, this.err = fmt.Fprintf(file, "%5d", maxScore)
+		}
+		if this.err != nil {
+			return
+		}
+	}
+
+	_, this.err = fmt.Fprintln(file)
+}
+
+func (this *SolWriter) AverageScore() {
+	if this.err != nil {
+		return
+	}
+	file := this.file
+	maxSel := this.maxSel
+	statistics := this.statistics
+
+	_, this.err = fmt.Fprint(file, "          AVERAGE SCORE: ")
+	if this.err != nil {
+		return
+	}
+
+	for i := 0; i <= maxSel; i++ {
+		total := 0
+		score := uint64(0)
+		for sc, line := range statistics {
+			total += line[i]
+			score += uint64(sc) * uint64(line[i])
+		}
+		if total > 0 {
+			average := score / uint64(total)
+
+			_, this.err = fmt.Fprintf(file, "%5d", average)
+		} else {
+			_, this.err = fmt.Fprint(file, "  ---")
+		}
+		if this.err != nil {
+			return
+		}
+	}
+
+	_, this.err = fmt.Fprintln(file)
+}
+
+func (this *SolWriter) FirstSteps() {
+	if this.err != nil {
+		return
+	}
+	prob := this.prob
+	file := this.file
+	firstSteps := this.firstSteps
+
+	_, this.err = fmt.Fprintln(file, "FIRST STEP DETAILS")
+	if this.err != nil {
+		return
+	}
+
+	for i, step := range firstSteps {
+		_, this.err = fmt.Fprintf(file, "---------- %3d ----------\n", i)
+		if this.err != nil {
+			return
+		}
+		this.err = showFieldWithMark(file, prob, step)
+		if this.err != nil {
+			return
+		}
+	}
+}
+
+func (this *SolWriter) MinScoreMap() {
+	if this.err != nil {
+		return
+	}
+	statistics := this.statistics
+	file := this.file
+	firstSteps := this.firstSteps
+
+	_, this.err = fmt.Fprintln(file, "FIRST STEP MIN SCORE MAP")
+	if this.err != nil {
+		return
+	}
+
+	minScoreField := util.MakeEmptyField[int]()
+	util.FillField(minScoreField, 9999)
+
+	for sc, cnts := range statistics {
+		for i, step := range firstSteps {
+			if cnts[i] == 0 {
+				continue
+			}
+			for row := 0; row < util.RowCount; row++ {
+				for col := 0; col < util.ColCount; col++ {
+					if step.Has(row, col) {
+						minScoreField[row][col] = util.Min(minScoreField[row][col], sc)
+					}
+				}
+			}
+		}
+	}
+
+	for row := 0; row < util.RowCount; row++ {
+		for col := 0; col < util.ColCount; col++ {
+			value := minScoreField[row][col]
+			if value == 9999 {
+				_, this.err = fmt.Fprint(file, " ---")
+			} else {
+				_, this.err = fmt.Fprintf(file, "%4d", value)
+			}
+			if this.err != nil {
+				return
+			}
+
+		}
+		_, this.err = fmt.Fprintln(file)
+		if this.err != nil {
+			return
+		}
+	}
+}
+
+func (this *SolWriter) MaxScoreMap() {
+	if this.err != nil {
+		return
+	}
+	statistics := this.statistics
+	file := this.file
+	firstSteps := this.firstSteps
+
+	_, this.err = fmt.Fprintln(file, "FIRST STEP MAX SCORE MAP")
+	if this.err != nil {
+		return
+	}
+
+	maxScoreField := util.MakeEmptyField[int]()
+	util.FillField(maxScoreField, -1)
+	for sc, cnts := range statistics {
+		for i, step := range firstSteps {
+			if cnts[i] == 0 {
+				continue
+			}
+			for row := 0; row < util.RowCount; row++ {
+				for col := 0; col < util.ColCount; col++ {
+					if step.Has(row, col) {
+						maxScoreField[row][col] = util.Max(maxScoreField[row][col], sc)
+					}
+				}
+			}
+		}
+	}
+
+	for row := 0; row < util.RowCount; row++ {
+		for col := 0; col < util.ColCount; col++ {
+			value := maxScoreField[row][col]
+			if value < 0 {
+				_, this.err = fmt.Fprint(file, " ---")
+			} else {
+				_, this.err = fmt.Fprintf(file, "%4d", value)
+			}
+			if this.err != nil {
 				return
 			}
 		}
-		if _, err = fmt.Fprintln(file); err != nil {
+		_, this.err = fmt.Fprintln(file)
+		if this.err != nil {
 			return
 		}
+	}
+}
 
-		/*  *  *  *  *  *  *  *  *  *  *  */
+func (this *SolWriter) AverageScoreMap() {
+	if this.err != nil {
+		return
+	}
+	statistics := this.statistics
+	file := this.file
+	firstSteps := this.firstSteps
 
-		for sc, cnt := range scores {
+	_, this.err = fmt.Fprintln(file, "FIRST STEP AVERAGE SCORE MAP")
+	if this.err != nil {
+		return
+	}
+
+	scoreField := util.MakeEmptyField[int]()
+	countField := util.MakeEmptyField[int]()
+	for sc, cnts := range statistics {
+		for i, step := range firstSteps {
+			cnt := cnts[i]
 			if cnt == 0 {
 				continue
 			}
-			if _, err = fmt.Fprintf(file, "SCORE %3d, COUNT %6d: ", sc, cnt); err != nil {
-				return
-			}
-			for i := 0; i <= maxSel; i++ {
-				if _, err = fmt.Fprintf(file, "%5d", statistics[sc][i]); err != nil {
-					return
+			sum := sc * cnt
+			for row := 0; row < util.RowCount; row++ {
+				for col := 0; col < util.ColCount; col++ {
+					if step.Has(row, col) {
+						scoreField[row][col] += sum
+						countField[row][col] += cnt
+					}
 				}
 			}
-			if _, err = fmt.Fprintln(file); err != nil {
-				return
-			}
 		}
+	}
 
-		/*  *  *  *  *  *  *  *  *  *  *  */
-
-		if _, err = fmt.Fprint(file, "========================="); err != nil {
-			return
-		}
-
-		for i := 0; i <= maxSel; i++ {
-			if _, err = fmt.Fprint(file, "====="); err != nil {
-				return
-			}
-		}
-		if _, err = fmt.Fprintln(file); err != nil {
-			return
-		}
-
-		/*  *  *  *  *  *  *  *  *  *  *  */
-
-		if _, err = fmt.Fprint(file, "                  TOTAL: "); err != nil {
-			return
-		}
-
-		for i := 0; i <= maxSel; i++ {
-			total := 0
-			for _, line := range statistics {
-				total += line[i]
-			}
-			if _, err = fmt.Fprintf(file, "%5d", total); err != nil {
-				return
-			}
-		}
-		if _, err = fmt.Fprintln(file); err != nil {
-			return
-		}
-
-		/*  *  *  *  *  *  *  *  *  *  *  */
-
-		if _, err = fmt.Fprint(file, "========================="); err != nil {
-			return
-		}
-
-		for i := 0; i <= maxSel; i++ {
-			if _, err = fmt.Fprint(file, "====="); err != nil {
-				return
-			}
-		}
-		if _, err = fmt.Fprintln(file); err != nil {
-			return
-		}
-
-		/*  *  *  *  *  *  *  *  *  *  *  */
-
-		if _, err = fmt.Fprint(file, "              MIN SCORE: "); err != nil {
-			return
-		}
-
-		for i := 0; i <= maxSel; i++ {
-			minScore := 9999
-			for sc, line := range statistics {
-				if line[i] > 0 {
-					minScore = sc
-					break
-				}
-			}
-			if minScore == 9999 {
-				if _, err = fmt.Fprint(file, "  ---"); err != nil {
-					return
-				}
+	for row := 0; row < util.RowCount; row++ {
+		for col := 0; col < util.ColCount; col++ {
+			if countField[row][col] > 0 {
+				value := float64(scoreField[row][col]) / float64(countField[row][col])
+				_, this.err = fmt.Fprintf(file, " %5.1f", value)
 			} else {
-				if _, err = fmt.Fprintf(file, "%5d", minScore); err != nil {
-					return
-				}
+				_, this.err = fmt.Fprint(file, " ---.-")
 			}
-		}
-		if _, err = fmt.Fprintln(file); err != nil {
-			return
-		}
-
-		/*  *  *  *  *  *  *  *  *  *  *  */
-
-		if _, err = fmt.Fprint(file, "              MAX SCORE: "); err != nil {
-			return
-		}
-
-		for i := 0; i <= maxSel; i++ {
-			maxScore := -1
-			for sc, line := range statistics {
-				if line[i] > 0 {
-					maxScore = sc
-				}
-			}
-			if maxScore < 0 {
-				if _, err = fmt.Fprint(file, "  ---"); err != nil {
-					return
-				}
-			} else {
-				if _, err = fmt.Fprintf(file, "%5d", maxScore); err != nil {
-					return
-				}
-			}
-		}
-		if _, err = fmt.Fprintln(file); err != nil {
-			return
-		}
-
-		/*  *  *  *  *  *  *  *  *  *  *  */
-
-		if _, err = fmt.Fprint(file, "          AVERAGE SCORE: "); err != nil {
-			return
-		}
-
-		for i := 0; i <= maxSel; i++ {
-			total := 0
-			score := uint64(0)
-			for sc, line := range statistics {
-				total += line[i]
-				score += uint64(sc) * uint64(line[i])
-			}
-			if total > 0 {
-				average := score / uint64(total)
-
-				if _, err = fmt.Fprintf(file, "%5d", average); err != nil {
-					return
-				}
-			} else {
-				if _, err = fmt.Fprint(file, "  ---"); err != nil {
-					return
-				}
-			}
-		}
-		if _, err = fmt.Fprintln(file); err != nil {
-			return
-		}
-
-		/*  *  *  *  *  *  *  *  *  *  *  */
-
-		if _, err = fmt.Fprintln(file, Bar); err != nil {
-			return
-		}
-
-		if _, err = fmt.Fprintln(file, "FIRST STEP DETAILS"); err != nil {
-			return
-		}
-
-		for i, marker := range search.Search(prob) {
-			if _, err = fmt.Fprintf(file, "---------- %3d ----------\n", i); err != nil {
-				return
-			}
-			if err = showFieldWithMark(file, prob, marker); err != nil {
+			if this.err != nil {
 				return
 			}
 		}
-
-		/*  *  *  *  *  *  *  *  *  *  *  */
-
-		if _, err = fmt.Fprintln(file, Bar); err != nil {
+		_, this.err = fmt.Fprintln(file)
+		if this.err != nil {
 			return
 		}
-
-		if _, err = fmt.Fprintln(file, "FIRST STEP MIN SCORE MAP"); err != nil {
-			return
-		}
-
-		minScoreField := util.MakeEmptyField[int]()
-		util.FillField(minScoreField, 9999)
-
-		for sc, cnts := range statistics {
-			for i, step := range firstSteps {
-				if cnts[i] == 0 {
-					continue
-				}
-				for row := 0; row < util.RowCount; row++ {
-					for col := 0; col < util.ColCount; col++ {
-						if step.Has(row, col) {
-							minScoreField[row][col] = util.Min(minScoreField[row][col], sc)
-						}
-					}
-				}
-			}
-		}
-
-		for row := 0; row < util.RowCount; row++ {
-			for col := 0; col < util.ColCount; col++ {
-				value := minScoreField[row][col]
-				if value == 9999 {
-					if _, err = fmt.Fprint(file, " ---"); err != nil {
-						return
-					}
-				} else {
-					if _, err = fmt.Fprintf(file, "%4d", value); err != nil {
-						return
-					}
-				}
-
-			}
-			if _, err = fmt.Fprintln(file); err != nil {
-				return
-			}
-		}
-
-		/*  *  *  *  *  *  *  *  *  *  *  */
-
-		if _, err = fmt.Fprintln(file, Bar); err != nil {
-			return
-		}
-
-		if _, err = fmt.Fprintln(file, "FIRST STEP MAX SCORE MAP"); err != nil {
-			return
-		}
-
-		maxScoreField := util.MakeEmptyField[int]()
-		util.FillField(maxScoreField, -1)
-		for sc, cnts := range statistics {
-			for i, step := range firstSteps {
-				if cnts[i] == 0 {
-					continue
-				}
-				for row := 0; row < util.RowCount; row++ {
-					for col := 0; col < util.ColCount; col++ {
-						if step.Has(row, col) {
-							maxScoreField[row][col] = util.Max(maxScoreField[row][col], sc)
-						}
-					}
-				}
-			}
-		}
-
-		for row := 0; row < util.RowCount; row++ {
-			for col := 0; col < util.ColCount; col++ {
-				value := maxScoreField[row][col]
-				if value < 0 {
-					if _, err = fmt.Fprint(file, " ---"); err != nil {
-						return
-					}
-				} else {
-					if _, err = fmt.Fprintf(file, "%4d", value); err != nil {
-						return
-					}
-				}
-
-			}
-			if _, err = fmt.Fprintln(file); err != nil {
-				return
-			}
-		}
-
-		/*  *  *  *  *  *  *  *  *  *  *  */
-
-		if _, err = fmt.Fprintln(file, Bar); err != nil {
-			return
-		}
-
-		if _, err = fmt.Fprintln(file, "FIRST STEP AVERAGE SCORE MAP"); err != nil {
-			return
-		}
-
-		scoreField := util.MakeEmptyField[int]()
-		countField := util.MakeEmptyField[int]()
-		for sc, cnts := range statistics {
-			for i, step := range firstSteps {
-				cnt := cnts[i]
-				if cnt == 0 {
-					continue
-				}
-				sum := sc * cnt
-				for row := 0; row < util.RowCount; row++ {
-					for col := 0; col < util.ColCount; col++ {
-						if step.Has(row, col) {
-							scoreField[row][col] += sum
-							countField[row][col] += cnt
-						}
-					}
-				}
-			}
-		}
-
-		for row := 0; row < util.RowCount; row++ {
-			for col := 0; col < util.ColCount; col++ {
-				if countField[row][col] > 0 {
-					value := float64(scoreField[row][col]) / float64(countField[row][col])
-
-					if _, err = fmt.Fprintf(file, " %5.1f", value); err != nil {
-						return
-					}
-				} else {
-					if _, err = fmt.Fprint(file, " ---.-"); err != nil {
-						return
-					}
-				}
-
-			}
-			if _, err = fmt.Fprintln(file); err != nil {
-				return
-			}
-		}
-
-		/*  *  *  *  *  *  *  *  *  *  *  */
-
-		if _, err = fmt.Fprintln(file, Bar); err != nil {
-			return
-		}
-	} // withStatistics
-
-	return
+	}
 }
