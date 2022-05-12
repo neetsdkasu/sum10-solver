@@ -1,9 +1,9 @@
 package solver
 
 import (
-	"sum10-solver/game"
-	"sum10-solver/marker"
-	"sum10-solver/problem"
+	"github.com/neetsdkasu/sum10-solver/game"
+	"github.com/neetsdkasu/sum10-solver/marker"
+	"github.com/neetsdkasu/sum10-solver/problem"
 )
 
 type Solution []*marker.Marker

@@ -3,13 +3,13 @@ package solver
 import (
 	"context"
 	"fmt"
+	"github.com/neetsdkasu/sum10-solver/game"
+	"github.com/neetsdkasu/sum10-solver/problem"
+	"github.com/neetsdkasu/sum10-solver/util"
 	"io"
 	"log"
 	"math/rand"
 	"sort"
-	"sum10-solver/game"
-	"sum10-solver/problem"
-	"sum10-solver/util"
 	"time"
 )
 

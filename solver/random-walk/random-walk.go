@@ -2,11 +2,11 @@ package randomWalk
 
 import (
 	"context"
+	"github.com/neetsdkasu/sum10-solver/game"
+	"github.com/neetsdkasu/sum10-solver/problem"
+	"github.com/neetsdkasu/sum10-solver/search"
+	"github.com/neetsdkasu/sum10-solver/solver"
 	"math/rand"
-	"sum10-solver/game"
-	"sum10-solver/problem"
-	"sum10-solver/search"
-	"sum10-solver/solver"
 	"time"
 )
 

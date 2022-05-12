@@ -2,18 +2,18 @@ package main
 
 import (
 	"fmt"
+	"github.com/neetsdkasu/sum10-solver/game"
+	"github.com/neetsdkasu/sum10-solver/marker"
+	"github.com/neetsdkasu/sum10-solver/problem"
+	"github.com/neetsdkasu/sum10-solver/search"
+	"github.com/neetsdkasu/sum10-solver/util"
 	"io"
 	"log"
 	"math/rand"
-	"sum10-solver/game"
-	"sum10-solver/marker"
-	"sum10-solver/problem"
-	"sum10-solver/search"
-	"sum10-solver/util"
 	"time"
 )
 
-const NumOfSearching = 50 // 500000
+const NumOfSearching = 500000
 const Progress = NumOfSearching / 50
 
 func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err error) {

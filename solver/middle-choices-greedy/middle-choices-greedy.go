@@ -1,11 +1,11 @@
 package middle_choices_greedy
 
 import (
+	"github.com/neetsdkasu/sum10-solver/game"
+	"github.com/neetsdkasu/sum10-solver/problem"
+	"github.com/neetsdkasu/sum10-solver/search"
+	"github.com/neetsdkasu/sum10-solver/solver"
 	"sort"
-	"sum10-solver/game"
-	"sum10-solver/problem"
-	"sum10-solver/search"
-	"sum10-solver/solver"
 	"time"
 )
 

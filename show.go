@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/neetsdkasu/sum10-solver/game"
+	"github.com/neetsdkasu/sum10-solver/marker"
+	"github.com/neetsdkasu/sum10-solver/util"
 	"io"
-	"sum10-solver/game"
-	"sum10-solver/marker"
-	"sum10-solver/util"
 )
 
 func showField(file io.Writer, field util.FieldViewer) (err error) {

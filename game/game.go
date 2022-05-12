@@ -2,9 +2,9 @@ package game
 
 import (
 	"errors"
-	"sum10-solver/marker"
-	"sum10-solver/problem"
-	"sum10-solver/util"
+	"github.com/neetsdkasu/sum10-solver/marker"
+	"github.com/neetsdkasu/sum10-solver/problem"
+	"github.com/neetsdkasu/sum10-solver/util"
 )
 
 type Game struct {

@@ -1,9 +1,9 @@
 package search
 
 import (
+	"github.com/neetsdkasu/sum10-solver/marker"
+	"github.com/neetsdkasu/sum10-solver/util"
 	"sort"
-	"sum10-solver/marker"
-	"sum10-solver/util"
 )
 
 // いずれも8x8の64マスが前提の処理

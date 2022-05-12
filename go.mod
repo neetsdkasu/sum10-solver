@@ -1,4 +1,4 @@
-module sum10-solver
+module github.com/neetsdkasu/sum10-solver
 
 go 1.18
 

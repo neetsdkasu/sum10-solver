@@ -2,8 +2,8 @@ package problem
 
 import (
 	mt "bitbucket.org/neetsdkasu/mersenne_twister_go"
+	"github.com/neetsdkasu/sum10-solver/util"
 	"math"
-	"sum10-solver/util"
 )
 
 type Problem struct {

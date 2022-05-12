@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/neetsdkasu/sum10-solver/solver"
+	"github.com/neetsdkasu/sum10-solver/util"
 	"os"
-	"sum10-solver/solver"
-	"sum10-solver/util"
 )
 
 const InvalidArgumentExitCode = 2

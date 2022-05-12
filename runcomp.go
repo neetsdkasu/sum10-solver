@@ -2,21 +2,21 @@ package main
 
 import (
 	"fmt"
+	"github.com/neetsdkasu/sum10-solver/solver"
+	"github.com/neetsdkasu/sum10-solver/util"
 	"log"
 	"os"
-	"sum10-solver/solver"
-	"sum10-solver/util"
 )
 
 // list up solvers
 import (
-	_ "sum10-solver/solver/random-walk"
+	_ "github.com/neetsdkasu/sum10-solver/solver/random-walk"
 
-	_ "sum10-solver/solver/lots-of-choices-greedy"
+	_ "github.com/neetsdkasu/sum10-solver/solver/lots-of-choices-greedy"
 
-	_ "sum10-solver/solver/fewer-choices-greedy"
+	_ "github.com/neetsdkasu/sum10-solver/solver/fewer-choices-greedy"
 
-	_ "sum10-solver/solver/middle-choices-greedy"
+	_ "github.com/neetsdkasu/sum10-solver/solver/middle-choices-greedy"
 )
 
 func runComp(limitSeconds, numOfTestcase, seed int) (err error) {

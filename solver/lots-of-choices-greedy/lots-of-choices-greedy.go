@@ -3,11 +3,11 @@ package lots_of_choices_greedy
 import (
 	"context"
 	"fmt"
-	"sum10-solver/game"
-	"sum10-solver/marker"
-	"sum10-solver/problem"
-	"sum10-solver/search"
-	"sum10-solver/solver"
+	"github.com/neetsdkasu/sum10-solver/game"
+	"github.com/neetsdkasu/sum10-solver/marker"
+	"github.com/neetsdkasu/sum10-solver/problem"
+	"github.com/neetsdkasu/sum10-solver/search"
+	"github.com/neetsdkasu/sum10-solver/solver"
 	"time"
 )
 

@@ -1,7 +1,7 @@
 package marker
 
 import (
-	"sum10-solver/util"
+	"github.com/neetsdkasu/sum10-solver/util"
 )
 
 type Marker struct {
