@@ -8,14 +8,18 @@ import (
 	"sum10-solver/game"
 	"sum10-solver/problem"
 	"sum10-solver/search"
+	"sum10-solver/util"
 	"time"
 )
 
-func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err error) {
-	const Bar = "-----------------------------"
+const NumOfSearching = 500000
+const Progress = NumOfSearching / 50
 
-	log.Printf("searching solutions of seed %d puzzle by random walk\n", seed)
-	log.Println("wait for tens of minutes ...")
+func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err error) {
+	const Bar = "---------------------------------------------------------------------------------------"
+
+	log.Printf("SUM10パズルのSEED=%dのランダム解を大量に生成し、その中からスコアの一番高い解を見つけます\n", seed)
+	log.Println("この作業には数十分以上の時間がかかります")
 
 	prob := problem.New(seed)
 
@@ -35,7 +39,8 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 
 	game0 := game.New(prob)
 
-	numOfFirstStep := len(search.Search(prob))
+	firstSteps := search.Search(prob)
+	numOfFirstStep := len(firstSteps)
 
 	scores := make([]int, 400)
 	statistics := make([][]int, 400)
@@ -46,9 +51,6 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 	maxSel := 0
 
 	best := game0
-
-	const NumOfSearching = 500000
-	const Progress = NumOfSearching / 50
 
 	time0 := time.Now()
 	rand.Seed(time0.Unix())
@@ -295,7 +297,10 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 				total += line[i]
 				score += uint64(sc) * uint64(line[i])
 			}
-			average := score / uint64(total)
+			var average uint64
+			if total > 0 {
+				average = score / uint64(total)
+			}
 			if _, err = fmt.Fprintf(file, "%5d", average); err != nil {
 				return
 			}
@@ -323,10 +328,154 @@ func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err err
 			}
 		}
 
+		/*  *  *  *  *  *  *  *  *  *  *  */
+
 		if _, err = fmt.Fprintln(file, Bar); err != nil {
 			return
 		}
 
+		if _, err = fmt.Fprintln(file, "FIRST STEP MIN SCORE MAP"); err != nil {
+			return
+		}
+
+		minScoreField := util.MakeEmptyField[int]()
+		util.FillField(minScoreField, 9999)
+
+		for sc, cnts := range statistics {
+			for i, step := range firstSteps {
+				if cnts[i] == 0 {
+					continue
+				}
+				for row := 0; row < util.RowCount; row++ {
+					for col := 0; col < util.ColCount; col++ {
+						if step.Has(row, col) {
+							minScoreField[row][col] = util.Min(minScoreField[row][col], sc)
+						}
+					}
+				}
+			}
+		}
+
+		for row := 0; row < util.RowCount; row++ {
+			for col := 0; col < util.ColCount; col++ {
+				value := minScoreField[row][col]
+				if value == 9999 {
+					if _, err = fmt.Fprint(file, " ---"); err != nil {
+						return
+					}
+				} else {
+					if _, err = fmt.Fprintf(file, "%4d", value); err != nil {
+						return
+					}
+				}
+
+			}
+			if _, err = fmt.Fprintln(file); err != nil {
+				return
+			}
+		}
+
+		/*  *  *  *  *  *  *  *  *  *  *  */
+
+		if _, err = fmt.Fprintln(file, Bar); err != nil {
+			return
+		}
+
+		if _, err = fmt.Fprintln(file, "FIRST STEP MAX SCORE MAP"); err != nil {
+			return
+		}
+
+		maxScoreField := util.MakeEmptyField[int]()
+		util.FillField(maxScoreField, -1)
+		for sc, cnts := range statistics {
+			for i, step := range firstSteps {
+				if cnts[i] == 0 {
+					continue
+				}
+				for row := 0; row < util.RowCount; row++ {
+					for col := 0; col < util.ColCount; col++ {
+						if step.Has(row, col) {
+							maxScoreField[row][col] = util.Max(maxScoreField[row][col], sc)
+						}
+					}
+				}
+			}
+		}
+
+		for row := 0; row < util.RowCount; row++ {
+			for col := 0; col < util.ColCount; col++ {
+				value := maxScoreField[row][col]
+				if value < 0 {
+					if _, err = fmt.Fprint(file, " ---"); err != nil {
+						return
+					}
+				} else {
+					if _, err = fmt.Fprintf(file, "%4d", value); err != nil {
+						return
+					}
+				}
+
+			}
+			if _, err = fmt.Fprintln(file); err != nil {
+				return
+			}
+		}
+
+		/*  *  *  *  *  *  *  *  *  *  *  */
+
+		if _, err = fmt.Fprintln(file, Bar); err != nil {
+			return
+		}
+
+		if _, err = fmt.Fprintln(file, "FIRST STEP AVERAGE SCORE MAP"); err != nil {
+			return
+		}
+
+		scoreField := util.MakeEmptyField[int]()
+		countField := util.MakeEmptyField[int]()
+		for sc, cnts := range statistics {
+			for i, step := range firstSteps {
+				cnt := cnts[i]
+				if cnt == 0 {
+					continue
+				}
+				sum := sc * cnt
+				for row := 0; row < util.RowCount; row++ {
+					for col := 0; col < util.ColCount; col++ {
+						if step.Has(row, col) {
+							scoreField[row][col] += sum
+							countField[row][col] += cnt
+						}
+					}
+				}
+			}
+		}
+
+		for row := 0; row < util.RowCount; row++ {
+			for col := 0; col < util.ColCount; col++ {
+				if countField[row][col] > 0 {
+					value := float64(scoreField[row][col]) / float64(countField[row][col])
+
+					if _, err = fmt.Fprintf(file, " %5.1f", value); err != nil {
+						return
+					}
+				} else {
+					if _, err = fmt.Fprint(file, " ---.-"); err != nil {
+						return
+					}
+				}
+
+			}
+			if _, err = fmt.Fprintln(file); err != nil {
+				return
+			}
+		}
+
+		/*  *  *  *  *  *  *  *  *  *  *  */
+
+		if _, err = fmt.Fprintln(file, Bar); err != nil {
+			return
+		}
 	} // withStatistics
 
 	return

@@ -56,6 +56,14 @@ func CopyField[T int | bool](dst, src [][]T) {
 	}
 }
 
+func FillField[T int | bool](field [][]T, value T) {
+	for _, line := range field {
+		for col := range line {
+			line[col] = value
+		}
+	}
+}
+
 func Swap(field [][]int, row1, col1, row2, col2 int) {
 	field[row1][col1], field[row2][col2] = field[row2][col2], field[row1][col1]
 }
