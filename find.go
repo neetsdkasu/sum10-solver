@@ -9,11 +9,12 @@ import (
 	"github.com/neetsdkasu/sum10-solver/util"
 	"io"
 	"log"
+	"math"
 	"math/rand"
 	"time"
 )
 
-const NumOfSearching = 5000 // 500000
+const NumOfSearching = 500000
 const Progress = NumOfSearching / 50
 
 func findGoodSolution(file io.Writer, seed uint32, withStatistics bool) (err error) {
@@ -201,9 +202,6 @@ func (this *SolWriter) Statistics() {
 	}
 
 	_, this.err = fmt.Fprintln(this.file, "STATISTICS OF FIRST STEP")
-	if this.err != nil {
-		return
-	}
 
 	this.Bar()
 	this.Indexes()
@@ -216,6 +214,7 @@ func (this *SolWriter) Statistics() {
 	this.MaxScore()
 	this.AverageScore()
 	this.ModeScore()
+	this.StandardDeviation()
 	this.Bar()
 	this.FirstSteps()
 	this.Bar()
@@ -226,6 +225,8 @@ func (this *SolWriter) Statistics() {
 	this.AverageScoreMap()
 	this.Bar()
 	this.ModeScoreMap()
+	this.Bar()
+	this.StandardDeviationMap()
 	this.Bar()
 }
 
@@ -355,6 +356,47 @@ func (this *SolWriter) ModeScore() {
 			_, this.err = fmt.Fprint(file, "  ---")
 		} else {
 			_, this.err = fmt.Fprintf(file, "%5d", modeScore)
+		}
+		if this.err != nil {
+			return
+		}
+	}
+
+	_, this.err = fmt.Fprintln(file)
+}
+
+func (this *SolWriter) StandardDeviation() {
+	if this.err != nil {
+		return
+	}
+	file := this.file
+	maxSel := this.maxSel
+	statistics := this.statistics
+
+	_, this.err = fmt.Fprint(file, "     STANDARD DEVIATION: ")
+	if this.err != nil {
+		return
+	}
+
+	for i := 0; i <= maxSel; i++ {
+		total := uint64(0)
+		total2 := uint64(0)
+		count := 0
+
+		for sc, line := range statistics {
+			if line[i] > 0 {
+				total += uint64(sc) * uint64(line[i])
+				total2 += uint64(sc*sc) * uint64(line[i])
+				count += line[i]
+			}
+		}
+		if count == 0 {
+			_, this.err = fmt.Fprint(file, "  ---")
+		} else {
+			v := float64(total2)/float64(count) -
+				math.Pow(float64(total)/float64(count), 2)
+			sd := int(math.Floor(math.Sqrt(v)))
+			_, this.err = fmt.Fprintf(file, "%5d", sd)
 		}
 		if this.err != nil {
 			return
@@ -691,6 +733,71 @@ func (this *SolWriter) ModeScoreMap() {
 				_, this.err = fmt.Fprint(file, " ---")
 			} else {
 				_, this.err = fmt.Fprintf(file, "%4d", score)
+			}
+			if this.err != nil {
+				return
+			}
+		}
+		_, this.err = fmt.Fprintln(file)
+		if this.err != nil {
+			return
+		}
+	}
+}
+
+func (this *SolWriter) StandardDeviationMap() {
+	if this.err != nil {
+		return
+	}
+	statistics := this.statistics
+	file := this.file
+	firstSteps := this.firstSteps
+
+	_, this.err = fmt.Fprintln(file, "FIRST STEP STANDARD DEVIATION MAP")
+	if this.err != nil {
+		return
+	}
+
+	scoreField := make([][][]int, 400)
+	for sc := range scoreField {
+		scoreField[sc] = util.MakeEmptyField[int]()
+		util.FillField(scoreField[sc], -1)
+	}
+
+	for sc, cnts := range statistics {
+		for i, step := range firstSteps {
+			if cnts[i] == 0 {
+				continue
+			}
+			for row := 0; row < util.RowCount; row++ {
+				for col := 0; col < util.ColCount; col++ {
+					if step.Has(row, col) {
+						scoreField[sc][row][col] += cnts[i]
+					}
+				}
+			}
+		}
+	}
+
+	for row := 0; row < util.RowCount; row++ {
+		for col := 0; col < util.ColCount; col++ {
+			total := uint64(0)
+			total2 := uint64(0)
+			count := 0
+			for sc, field := range scoreField {
+				if cnt := field[row][col]; cnt > 0 {
+					total += uint64(sc) * uint64(cnt)
+					total2 += uint64(sc) * uint64(sc) * uint64(cnt)
+					count += cnt
+				}
+			}
+			if count == 0 {
+				_, this.err = fmt.Fprint(file, " --.-")
+			} else {
+				v := float64(total2)/float64(count) -
+					math.Pow(float64(total)/float64(count), 2)
+				sd := math.Sqrt(v)
+				_, this.err = fmt.Fprintf(file, "%5.1f", sd)
 			}
 			if this.err != nil {
 				return
