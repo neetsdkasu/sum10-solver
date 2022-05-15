@@ -1,4 +1,4 @@
-package middle_choices_greedy
+package middle_choices
 
 import (
 	"github.com/neetsdkasu/sum10-solver/game"
@@ -9,19 +9,19 @@ import (
 	"time"
 )
 
-type MiddleChoicesGreedy struct{}
+type MiddleChoices struct{}
 
-var instance MiddleChoicesGreedy
+var instance MiddleChoices
 
 func init() {
 	solver.Register(instance)
 }
 
-func (MiddleChoicesGreedy) Name() string {
-	return "MiddleChoicesGreedy"
+func (MiddleChoices) Name() string {
+	return "MiddleChoices"
 }
 
-func (MiddleChoicesGreedy) Description() string {
+func (MiddleChoices) Description() string {
 	return "次の手で選択肢が１つ以上ある手の中からをその数の大きさ順で中央の位置になる手を選ぶ"
 }
 
@@ -30,7 +30,7 @@ type Item struct {
 	ChoicesCount int
 }
 
-func (MiddleChoicesGreedy) Search(startTime time.Time, runningSeconds int, prob *problem.Problem) (solver.Solution, error) {
+func (MiddleChoices) Search(startTime time.Time, runningSeconds int, prob *problem.Problem) (solver.Solution, error) {
 
 	cur := game.New(prob)
 

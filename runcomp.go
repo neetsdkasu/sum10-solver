@@ -16,7 +16,7 @@ import (
 
 	_ "github.com/neetsdkasu/sum10-solver/solver/fewer-choices"
 
-	_ "github.com/neetsdkasu/sum10-solver/solver/middle-choices-greedy"
+	_ "github.com/neetsdkasu/sum10-solver/solver/middle-choices"
 )
 
 func runComp(limitSeconds, numOfTestcase, seed int) (err error) {
