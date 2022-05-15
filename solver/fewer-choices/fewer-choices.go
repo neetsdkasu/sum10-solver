@@ -1,4 +1,4 @@
-package fewer_choices_greedy
+package fewer_choices
 
 import (
 	"github.com/neetsdkasu/sum10-solver/game"
@@ -8,23 +8,23 @@ import (
 	"time"
 )
 
-type FewerChoicesGreedy struct{}
+type FewerChoices struct{}
 
-var instance FewerChoicesGreedy
+var instance FewerChoices
 
 func init() {
 	solver.Register(instance)
 }
 
-func (FewerChoicesGreedy) Name() string {
-	return "FewerChoicesGreedy"
+func (FewerChoices) Name() string {
+	return "FewerChoices"
 }
 
-func (FewerChoicesGreedy) Description() string {
+func (FewerChoices) Description() string {
 	return "次の手で選択肢が１つ以上ある手の中から一番少ない選択肢になる手を選ぶ"
 }
 
-func (FewerChoicesGreedy) Search(startTime time.Time, runningSeconds int, prob *problem.Problem) (solver.Solution, error) {
+func (FewerChoices) Search(startTime time.Time, runningSeconds int, prob *problem.Problem) (solver.Solution, error) {
 
 	cur := game.New(prob)
 

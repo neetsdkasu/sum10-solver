@@ -14,7 +14,7 @@ import (
 
 	_ "github.com/neetsdkasu/sum10-solver/solver/lots-of-choices"
 
-	_ "github.com/neetsdkasu/sum10-solver/solver/fewer-choices-greedy"
+	_ "github.com/neetsdkasu/sum10-solver/solver/fewer-choices"
 
 	_ "github.com/neetsdkasu/sum10-solver/solver/middle-choices-greedy"
 )
