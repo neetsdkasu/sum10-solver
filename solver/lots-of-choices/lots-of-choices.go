@@ -1,4 +1,4 @@
-package lots_of_choices_greedy
+package lots_of_choices
 
 import (
 	"context"
@@ -11,20 +11,20 @@ import (
 	"time"
 )
 
-type LotsOfChoicesGreedy struct {
+type LotsOfChoices struct {
 	depth int
 }
 
 func init() {
-	solver.Register(&LotsOfChoicesGreedy{1})
-	solver.Register(&LotsOfChoicesGreedy{2})
+	solver.Register(&LotsOfChoices{1})
+	solver.Register(&LotsOfChoices{2})
 }
 
-func (this *LotsOfChoicesGreedy) Name() string {
-	return fmt.Sprint("LotsOfChoicesGreedy-", this.depth)
+func (this *LotsOfChoices) Name() string {
+	return fmt.Sprint("LotsOfChoices-", this.depth)
 }
 
-func (this *LotsOfChoicesGreedy) Description() string {
+func (this *LotsOfChoices) Description() string {
 	if this.depth == 1 {
 		return "次の手で選択肢が一番多くなる手を選ぶ (1テストケースあたり数秒以上かけないと解が求まらないことがある)"
 	} else {
@@ -32,7 +32,7 @@ func (this *LotsOfChoicesGreedy) Description() string {
 	}
 }
 
-func (this *LotsOfChoicesGreedy) Search(startTime time.Time, runningSeconds int, prob *problem.Problem) (solver.Solution, error) {
+func (this *LotsOfChoices) Search(startTime time.Time, runningSeconds int, prob *problem.Problem) (solver.Solution, error) {
 	depth1 := this.depth == 1
 
 	deadline := startTime.Add(time.Duration(int64(runningSeconds))*time.Second - 20*time.Millisecond)

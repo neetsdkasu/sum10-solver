@@ -12,7 +12,7 @@ import (
 import (
 	_ "github.com/neetsdkasu/sum10-solver/solver/random-walk"
 
-	_ "github.com/neetsdkasu/sum10-solver/solver/lots-of-choices-greedy"
+	_ "github.com/neetsdkasu/sum10-solver/solver/lots-of-choices"
 
 	_ "github.com/neetsdkasu/sum10-solver/solver/fewer-choices-greedy"
 
