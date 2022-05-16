@@ -1,3 +1,6 @@
+// SUM10-SOLVER
+// author: Leonardone @ NEETSDKASU
+
 package middle_choices
 
 import (
