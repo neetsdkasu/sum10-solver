@@ -12,6 +12,8 @@
 ```bash
 $ go install github.com/neetsdkasu/sum10-solver@latest
 ```
+※Go言語のバージョンは1.18以上が必要です。  
+
 
 ### 実行方法
 
