@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/neetsdkasu/sum10-solver/game"
 	"github.com/neetsdkasu/sum10-solver/problem"
+	"github.com/neetsdkasu/sum10-solver/show"
 	"github.com/neetsdkasu/sum10-solver/util"
 	"io"
 	"log"
@@ -93,7 +94,7 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 	if _, err = fmt.Fprintln(file, "RUNNING LIMIT:", runningSeconds, "sec."); err != nil {
 		return
 	}
-	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+	if _, err = fmt.Fprintln(file, "--------------------------------------------------------------------------------------------"); err != nil {
 		return
 	}
 
@@ -126,7 +127,7 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 		}
 	}
 
-	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+	if _, err = fmt.Fprintln(file, "--------------------------------------------------------------------------------------------"); err != nil {
 		return
 	}
 
@@ -298,6 +299,32 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 
 	/* * * * * * * * * * * * * * * * * * * * */
 
+	if _, err = fmt.Fprintln(file, "--------------------------------------------------------------------------------------------"); err != nil {
+		return
+	}
+
+	if util.IsValidSeed(seed) {
+		var best *Result = nil
+		for _, line := range results {
+			for _, res := range line {
+				if res == nil {
+					continue
+				}
+				if res.Game == nil {
+					continue
+				}
+				if best == nil || res.Game.Score > best.Game.Score {
+					best = res
+				}
+			}
+		}
+		if best != nil {
+			if err = showBestSolution(file, best); err != nil {
+				return
+			}
+		}
+	}
+
 	return
 }
 
@@ -337,4 +364,60 @@ func run(runningSeconds int, prob *problem.Problem, solver Solver) (time.Time, <
 		}
 	}()
 	return startTime, ch
+}
+
+func showBestSolution(file io.Writer, best *Result) (err error) {
+
+	prob := best.Game.Problem
+
+	if _, err = fmt.Fprintln(file, "SEED:", prob.Seed()); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+		return
+	}
+
+	if err = show.ShowField(file, prob); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, "BEST SOLUTION (SCORE", best.Game.Score, ")"); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+		return
+	}
+
+	steps := make([]*game.Game, best.Game.Steps)
+
+	cur := best.Game
+	for cur.Steps > 0 {
+		steps[cur.Prev.Steps] = cur
+		cur = cur.Prev
+	}
+
+	for _, step := range steps {
+		if err = show.ShowGameWithMark(file, step.Prev, step.Taked); err != nil {
+			return
+		}
+		if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+			return
+		}
+	}
+
+	if err = show.ShowGame(file, best.Game); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+		return
+	}
+
+	return
 }

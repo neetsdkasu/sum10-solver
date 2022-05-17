@@ -1,7 +1,7 @@
 // SUM10-SOLVER
 // author: Leonardone @ NEETSDKASU
 
-package main
+package show
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"io"
 )
 
-func showField(file io.Writer, field util.FieldViewer) (err error) {
+func ShowField(file io.Writer, field util.FieldViewer) (err error) {
 	for row := 0; row < util.RowCount; row++ {
 		for col := 0; col < util.ColCount; col++ {
 			value := field.Get(row, col)
@@ -28,7 +28,7 @@ func showField(file io.Writer, field util.FieldViewer) (err error) {
 	return
 }
 
-func showFieldWithMark(file io.Writer, field util.FieldViewer, marker *marker.Marker) (err error) {
+func ShowFieldWithMark(file io.Writer, field util.FieldViewer, marker *marker.Marker) (err error) {
 	for row := 0; row < util.RowCount; row++ {
 		for col := 0; col < util.ColCount; col++ {
 			value := field.Get(row, col)
@@ -49,22 +49,22 @@ func showFieldWithMark(file io.Writer, field util.FieldViewer, marker *marker.Ma
 	return
 }
 
-func showGameWithMark(file io.Writer, game *game.Game, marker *marker.Marker) (err error) {
+func ShowGameWithMark(file io.Writer, game *game.Game, marker *marker.Marker) (err error) {
 	if _, err = fmt.Fprintln(file, "Steps:", game.Steps); err != nil {
 		return
 	}
 	if _, err = fmt.Fprintln(file, "Score:", game.Score); err != nil {
 		return
 	}
-	return showFieldWithMark(file, game, marker)
+	return ShowFieldWithMark(file, game, marker)
 }
 
-func showGame(file io.Writer, game *game.Game) (err error) {
+func ShowGame(file io.Writer, game *game.Game) (err error) {
 	if _, err = fmt.Fprintln(file, "Steps:", game.Steps); err != nil {
 		return
 	}
 	if _, err = fmt.Fprintln(file, "Score:", game.Score); err != nil {
 		return
 	}
-	return showField(file, game)
+	return ShowField(file, game)
 }
