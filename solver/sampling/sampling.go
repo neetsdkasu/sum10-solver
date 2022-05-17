@@ -34,7 +34,7 @@ func (self *Sampling) Name() string {
 
 func (self *Sampling) Description() string {
 	return fmt.Sprintf(
-		"選択肢から最大%d個選び、それぞれ%d個のランダム解を生成し、平均スコアの高かったものを選ぶ",
+		"選択肢から最大%d個選び、それぞれ%d個のランダム解を生成し、平均スコアの高かったものを選ぶ。このプロセスの中のランダム解で出た最大スコアのものを解とする",
 		self.NumOfTarget,
 		self.NumOfPlaying,
 	)
