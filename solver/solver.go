@@ -147,7 +147,15 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 
 	/* * * * * * * * * * * * * * * * * * * * */
 
-	if _, err = fmt.Fprintln(file, "==============================================================================="); err != nil {
+	if _, err = fmt.Fprint(file, "=========================="); err != nil {
+		return
+	}
+	for _ = range solvers {
+		if _, err = fmt.Fprint(file, "====="); err != nil {
+			return
+		}
+	}
+	if _, err = fmt.Fprintln(file); err != nil {
 		return
 	}
 
@@ -191,7 +199,15 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 
 	/* * * * * * * * * * * * * * * * * * * * */
 
-	if _, err = fmt.Fprintln(file, "==============================================================================="); err != nil {
+	if _, err = fmt.Fprint(file, "=========================="); err != nil {
+		return
+	}
+	for _ = range solvers {
+		if _, err = fmt.Fprint(file, "====="); err != nil {
+			return
+		}
+	}
+	if _, err = fmt.Fprintln(file); err != nil {
 		return
 	}
 
