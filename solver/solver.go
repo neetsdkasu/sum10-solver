@@ -319,7 +319,7 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 		return
 	}
 
-	if util.IsValidSeed(seed) {
+	if problemList[0].Seed() == problemList[numOfTestcase-1].Seed() {
 		var best *Result = nil
 		for _, line := range results {
 			for _, res := range line {
