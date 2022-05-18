@@ -374,6 +374,9 @@ func process(runningSeconds int, prob *problem.Problem, solver Solver) (Solution
 	select {
 	case <-ctx.Done():
 		log.Println("  timeout")
+		go func() {
+			_, _ = <-ch
+		}()
 		return nil, -1
 	case sol, ok := <-ch:
 		if ok {
@@ -395,10 +398,7 @@ func run(runningSeconds int, prob *problem.Problem, solver Solver) (time.Time, <
 			log.Println(err)
 			return
 		}
-		select {
-		case ch <- sol:
-		default:
-		}
+		ch <- sol
 	}()
 	return startTime, ch
 }

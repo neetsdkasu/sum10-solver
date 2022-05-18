@@ -25,6 +25,8 @@ import (
 
 	_ "github.com/neetsdkasu/sum10-solver/solver/near-edge"
 
+	_ "github.com/neetsdkasu/sum10-solver/solver/far-edge"
+
 	_ "github.com/neetsdkasu/sum10-solver/solver/sampling"
 )
 
