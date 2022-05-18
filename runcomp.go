@@ -23,6 +23,8 @@ import (
 
 	_ "github.com/neetsdkasu/sum10-solver/solver/first"
 
+	_ "github.com/neetsdkasu/sum10-solver/solver/near-edge"
+
 	_ "github.com/neetsdkasu/sum10-solver/solver/sampling"
 )
 
