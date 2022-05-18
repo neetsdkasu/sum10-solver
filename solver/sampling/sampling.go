@@ -26,6 +26,11 @@ func init() {
 	solver.Register(&Sampling{5, 10})
 	solver.Register(&Sampling{10, 10})
 	solver.Register(&Sampling{15, 10})
+	solver.Register(&Sampling{10, 15})
+	solver.Register(&Sampling{15, 15})
+	solver.Register(&Sampling{20, 20})
+	solver.Register(&Sampling{30, 10})
+	solver.Register(&Sampling{10, 30})
 }
 
 func (self *Sampling) Name() string {

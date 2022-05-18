@@ -62,8 +62,9 @@ func (res *Result) IsValid() bool {
 
 func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 	log.Println("Running Comp-Mode")
-	log.Println("  running limit:", runningSeconds, "sec.")
-	log.Println("  number of testcase:", numOfTestcase)
+	log.Println("  running limit      :", runningSeconds, "sec.")
+	log.Println("  number of testcase :", numOfTestcase)
+	log.Println("  number of solver   :", len(solvers))
 
 	problemList := make([]*problem.Problem, numOfTestcase)
 	if util.IsValidSeed(seed) {
@@ -104,7 +105,7 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 	}
 
 	for i, solver := range solvers {
-		if _, err = fmt.Fprintf(file, "Entry No. %3d\n", i); err != nil {
+		if _, err = fmt.Fprintf(file, "Entry No. %3d\n", i+1); err != nil {
 			return
 		}
 		if _, err = fmt.Fprintln(file, " ", solver.Name()); err != nil {
@@ -114,7 +115,7 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 			return
 		}
 
-		log.Printf("process: No. %3d %s", i, solver.Name())
+		log.Printf("process: No. %3d %s", i+1, solver.Name())
 
 		for k, prob := range problemList {
 			log.Printf("  [%3d/%3d] Seed: %5d", k+1, numOfTestcase, prob.Seed())
@@ -127,7 +128,17 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 		}
 	}
 
-	if _, err = fmt.Fprintln(file, "--------------------------------------------------------------------------------------------"); err != nil {
+	/* * * * * * * * * * * * * * * * * * * * */
+
+	if _, err = fmt.Fprint(file, "--------------------------"); err != nil {
+		return
+	}
+	for _ = range solvers {
+		if _, err = fmt.Fprint(file, "-----"); err != nil {
+			return
+		}
+	}
+	if _, err = fmt.Fprintln(file); err != nil {
 		return
 	}
 
@@ -137,7 +148,7 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 		return
 	}
 	for i := range solvers {
-		if _, err = fmt.Fprintf(file, "  %3d", i); err != nil {
+		if _, err = fmt.Fprintf(file, "  %3d", i+1); err != nil {
 			return
 		}
 	}
@@ -315,9 +326,19 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 
 	/* * * * * * * * * * * * * * * * * * * * */
 
-	if _, err = fmt.Fprintln(file, "--------------------------------------------------------------------------------------------"); err != nil {
+	if _, err = fmt.Fprint(file, "--------------------------"); err != nil {
 		return
 	}
+	for _ = range solvers {
+		if _, err = fmt.Fprint(file, "-----"); err != nil {
+			return
+		}
+	}
+	if _, err = fmt.Fprintln(file); err != nil {
+		return
+	}
+
+	/* * * * * * * * * * * * * * * * * * * * */
 
 	if problemList[0].Seed() == problemList[numOfTestcase-1].Seed() {
 		var best *Result = nil
