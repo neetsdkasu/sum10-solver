@@ -28,6 +28,8 @@ import (
 	_ "github.com/neetsdkasu/sum10-solver/solver/far-edge"
 
 	_ "github.com/neetsdkasu/sum10-solver/solver/sampling"
+
+	_ "github.com/neetsdkasu/sum10-solver/solver/sampling2"
 )
 
 func runComp(limitSeconds, numOfTestcase, seed int) (err error) {
