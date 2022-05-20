@@ -26,7 +26,7 @@ func init() {
 	solver.Register(&Sampling2{10, 10, 100})
 	solver.Register(&Sampling2{20, 20, 100})
 	solver.Register(&Sampling2{30, 30, 100})
-	solver.Register(&Sampling2{200, 30, 100})
+	solver.Register(&Sampling2{200, 30, 600})
 
 	// 微妙、多様性(？)を確保できてない･･･
 }
@@ -165,12 +165,22 @@ func (self *Sampling2) run(ctx context.Context, prob *problem.Problem) <-chan so
 			})
 
 			if additionalList[0].Sum == additionalList[len(additionalList)-1].Sum {
+				// 選択肢に幅がないと同スコアが並びそうという勝手な妄想から…
+				// 浅い階層でここに来ることは少なそう（願望）
+				// 中間の階層で運悪くここに突入することはありえるかも？（分からん…）
+				// 変化する可能性の低い高スコアStateが並ぶとidleList内の多様性を破壊するので…（？）
 				continue
 			}
 
 			idleList = append(idleList, additionalList...)
 			sort.Slice(idleList, func(a, b int) bool {
-				return idleList[a].Sum < idleList[b].Sum
+				diff := idleList[a].Sum - idleList[b].Sum
+				if diff == 0 {
+					// 同じスコアが発生するかはわからんが（分析してないので）
+					// 多様性（？）確保のため、浅い階層を優先する
+					return idleList[a].Game.Steps < idleList[b].Game.Steps
+				}
+				return diff < 0
 			})
 
 			if len(idleList) > limitNumOfState {
