@@ -27,6 +27,7 @@ func init() {
 	solver.Register(&Sampling2{20, 20, 100})
 	solver.Register(&Sampling2{30, 30, 100})
 	solver.Register(&Sampling2{200, 30, 600})
+	solver.Register(&Sampling2{60, 60, 600})
 
 	// 微妙、多様性(？)を確保できてない･･･
 }
@@ -72,8 +73,9 @@ func (self *Sampling2) Search(startTime time.Time, runningSeconds int, prob *pro
 }
 
 type State struct {
-	Game *game.Game
-	Sum  int
+	Game      *game.Game
+	Sum       int
+	FirstTime bool
 }
 
 func (self *Sampling2) run(ctx context.Context, prob *problem.Problem) <-chan solver.Solution {
@@ -91,7 +93,7 @@ func (self *Sampling2) run(ctx context.Context, prob *problem.Problem) <-chan so
 		best := cur
 
 		idleList := make([]*State, 0, limitNumOfState+200)
-		idleList = append(idleList, &State{cur, 0})
+		idleList = append(idleList, &State{cur, 0, false})
 
 		additionalList := make([]*State, 0, numOfTarget)
 
@@ -103,9 +105,10 @@ func (self *Sampling2) run(ctx context.Context, prob *problem.Problem) <-chan so
 			}
 
 			size := len(idleList) - 1
-			cur = idleList[size].Game
+			curState := idleList[size]
 			idleList = idleList[:size]
 
+			cur = curState.Game
 			list := search.Search(cur)
 			if len(list) == 0 {
 				continue
@@ -156,7 +159,7 @@ func (self *Sampling2) run(ctx context.Context, prob *problem.Problem) <-chan so
 				// 下げ方が無根拠なのでよろしくない
 				sum -= cur.Steps * numOfPlaying
 
-				state := &State{tmp, sum}
+				state := &State{tmp, sum, true}
 				additionalList = append(additionalList, state)
 			}
 
@@ -169,6 +172,10 @@ func (self *Sampling2) run(ctx context.Context, prob *problem.Problem) <-chan so
 				// 浅い階層でここに来ることは少なそう（願望）
 				// 中間の階層で運悪くここに突入することはありえるかも？（分からん…）
 				// 変化する可能性の低い高スコアStateが並ぶとidleList内の多様性を破壊するので…（？）
+				if curState.FirstTime {
+					curState.FirstTime = false
+					idleList = append(idleList, curState)
+				}
 				continue
 			}
 

@@ -34,6 +34,7 @@ func init() {
 	solver.Register(&Sampling{30, 30})
 	solver.Register(&Sampling{40, 40})
 	solver.Register(&Sampling{200, 30})
+	solver.Register(&Sampling{60, 60})
 
 	// 数を増やしていっても、途中の一度選んでしまった箇所に最終スコアが左右されるので
 	// あまり、よくないソルバー
