@@ -32,7 +32,8 @@ sum10-solver -seed 5531
 例えば  
 `SEED=5531`でスコア`230`になる解を得るには`sum10-solver`を3～5回くらい実行しないと発見できないかもしれません。  
 `SEED=5531`でスコア`220`になる解を得るには`sum10-solver`を1～3回くらいの実行で見つかるかもしれません。  
-[SUM10パズル](https://neetsdkasu.github.io/game/sum10/index.html)は、人が解を探すのも、コンピュータで解を探すのも、どちらにもあまり向いてない気がします…ゲームとしてもパズルとしてもイマイチな感じがします…  
+  
+ちなみに[SUM10パズル](https://neetsdkasu.github.io/game/sum10/index.html)のスコアの上限は`270`です。  
 
 
 
