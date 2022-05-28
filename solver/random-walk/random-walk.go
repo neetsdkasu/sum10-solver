@@ -1,7 +1,7 @@
 // SUM10-SOLVER
 // author: Leonardone @ NEETSDKASU
 
-package randomWalk
+package random_walk
 
 import (
 	"context"

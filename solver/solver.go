@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/neetsdkasu/sum10-solver/game"
 	"github.com/neetsdkasu/sum10-solver/problem"
+	"github.com/neetsdkasu/sum10-solver/show"
 	"github.com/neetsdkasu/sum10-solver/util"
 	"io"
 	"log"
@@ -31,6 +32,26 @@ func Count() int {
 	return len(solvers)
 }
 
+func SolverList() []string {
+	list := make([]string, len(solvers))
+	for i, solver := range solvers {
+		list[i] = solver.Name()
+	}
+	return list
+}
+
+func FindSolver(name string) (Solver, bool) {
+	if _, ok := uniqueSolverName[name]; !ok {
+		return nil, false
+	}
+	for _, solver := range solvers {
+		if name == solver.Name() {
+			return solver, true
+		}
+	}
+	return nil, false
+}
+
 func Register(solver Solver) {
 	name := solver.Name()
 	if _, ok := uniqueSolverName[name]; ok {
@@ -47,6 +68,14 @@ type Result struct {
 	Duration time.Duration
 }
 
+func newResult(prob *problem.Problem, sol Solution, dur time.Duration) *Result {
+	return &Result{
+		Solution: sol,
+		Game:     sol.Replay(prob),
+		Duration: dur,
+	}
+}
+
 func (res *Result) IsError() bool {
 	return res.Duration == 0
 }
@@ -59,10 +88,74 @@ func (res *Result) IsValid() bool {
 	return res.Game != nil && res.Duration > 0
 }
 
+func Solve(file io.Writer, seed int, name string, runningSeconds, tryCount int) (err error) {
+	log.Println("Running Solver-Mode")
+	log.Println("  seed          :", seed)
+	log.Println("  solver name   :", name)
+	log.Println("  running limit :", runningSeconds, "sec.")
+	log.Println("  try count     :", tryCount)
+
+	prob := problem.New(uint32(seed))
+	solver, _ := FindSolver(name)
+
+	var best *Result = nil
+
+	for i := 1; i <= tryCount; i++ {
+		log.Println("process [", i, "/", tryCount, "]")
+		sol, dur := process(runningSeconds, prob, solver)
+		res := newResult(prob, sol, dur)
+		if res.IsValid() {
+			score := res.Game.Score
+			if best == nil || best.Game.Score < score {
+				best = res
+				if tryCount > 1 {
+					log.Println("  SUCCESS: score", score, "(UPDATE BEST)")
+				} else {
+					log.Println("  SUCCESS: score", score)
+				}
+			} else {
+				log.Println("  SUCCESS: score", score)
+			}
+		} else if res.IsTimeout() {
+			log.Println("  FAILURE: time out")
+		} else {
+			log.Println("  FAILURE: error")
+		}
+	}
+
+	if best != nil {
+		err = showBestSolution(file, best)
+		return
+	}
+
+	log.Println("NO SOLUTION FOUND")
+
+	if _, err = fmt.Fprintln(file, "SEED:", prob.Seed()); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+		return
+	}
+
+	if err = show.ShowField(file, prob); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+		return
+	}
+
+	_, err = fmt.Fprintln(file, "解を見つけることができませんでした")
+
+	return
+}
+
 func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 	log.Println("Running Comp-Mode")
-	log.Println("  running limit:", runningSeconds, "sec.")
-	log.Println("  number of testcase:", numOfTestcase)
+	log.Println("  running limit      :", runningSeconds, "sec.")
+	log.Println("  number of testcase :", numOfTestcase)
+	log.Println("  number of solver   :", len(solvers))
 
 	problemList := make([]*problem.Problem, numOfTestcase)
 	if util.IsValidSeed(seed) {
@@ -93,7 +186,7 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 	if _, err = fmt.Fprintln(file, "RUNNING LIMIT:", runningSeconds, "sec."); err != nil {
 		return
 	}
-	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+	if _, err = fmt.Fprintln(file, "--------------------------------------------------------------------------------------------"); err != nil {
 		return
 	}
 
@@ -103,7 +196,7 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 	}
 
 	for i, solver := range solvers {
-		if _, err = fmt.Fprintf(file, "Entry No. %3d\n", i); err != nil {
+		if _, err = fmt.Fprintf(file, "Entry No. %3d\n", i+1); err != nil {
 			return
 		}
 		if _, err = fmt.Fprintln(file, " ", solver.Name()); err != nil {
@@ -113,30 +206,22 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 			return
 		}
 
-		log.Printf("process: No. %3d %s", i, solver.Name())
+		log.Printf("process: No. %3d %s", i+1, solver.Name())
 
 		for k, prob := range problemList {
 			log.Printf("  [%3d/%3d] Seed: %5d", k+1, numOfTestcase, prob.Seed())
 			sol, dur := process(runningSeconds, prob, solver)
-			results[i][k] = &Result{
-				Solution: sol,
-				Game:     sol.Replay(prob),
-				Duration: dur,
-			}
+			results[i][k] = newResult(prob, sol, dur)
 		}
-	}
-
-	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
-		return
 	}
 
 	/* * * * * * * * * * * * * * * * * * * * */
 
-	if _, err = fmt.Fprint(file, "                 ENTRY NO:"); err != nil {
+	if _, err = fmt.Fprint(file, "--------------------------"); err != nil {
 		return
 	}
-	for i := range solvers {
-		if _, err = fmt.Fprintf(file, "  %3d", i); err != nil {
+	for _ = range solvers {
+		if _, err = fmt.Fprint(file, "-----"); err != nil {
 			return
 		}
 	}
@@ -146,7 +231,29 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 
 	/* * * * * * * * * * * * * * * * * * * * */
 
-	if _, err = fmt.Fprintln(file, "==============================================================================="); err != nil {
+	if _, err = fmt.Fprint(file, "                 ENTRY NO:"); err != nil {
+		return
+	}
+	for i := range solvers {
+		if _, err = fmt.Fprintf(file, "  %3d", i+1); err != nil {
+			return
+		}
+	}
+	if _, err = fmt.Fprintln(file); err != nil {
+		return
+	}
+
+	/* * * * * * * * * * * * * * * * * * * * */
+
+	if _, err = fmt.Fprint(file, "=========================="); err != nil {
+		return
+	}
+	for _ = range solvers {
+		if _, err = fmt.Fprint(file, "====="); err != nil {
+			return
+		}
+	}
+	if _, err = fmt.Fprintln(file); err != nil {
 		return
 	}
 
@@ -190,7 +297,15 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 
 	/* * * * * * * * * * * * * * * * * * * * */
 
-	if _, err = fmt.Fprintln(file, "==============================================================================="); err != nil {
+	if _, err = fmt.Fprint(file, "=========================="); err != nil {
+		return
+	}
+	for _ = range solvers {
+		if _, err = fmt.Fprint(file, "====="); err != nil {
+			return
+		}
+	}
+	if _, err = fmt.Fprintln(file); err != nil {
 		return
 	}
 
@@ -298,6 +413,42 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 
 	/* * * * * * * * * * * * * * * * * * * * */
 
+	if _, err = fmt.Fprint(file, "--------------------------"); err != nil {
+		return
+	}
+	for _ = range solvers {
+		if _, err = fmt.Fprint(file, "-----"); err != nil {
+			return
+		}
+	}
+	if _, err = fmt.Fprintln(file); err != nil {
+		return
+	}
+
+	/* * * * * * * * * * * * * * * * * * * * */
+
+	if problemList[0].Seed() == problemList[numOfTestcase-1].Seed() {
+		var best *Result = nil
+		for _, line := range results {
+			for _, res := range line {
+				if res == nil {
+					continue
+				}
+				if res.Game == nil {
+					continue
+				}
+				if best == nil || res.Game.Score > best.Game.Score {
+					best = res
+				}
+			}
+		}
+		if best != nil {
+			if err = showBestSolution(file, best); err != nil {
+				return
+			}
+		}
+	}
+
 	return
 }
 
@@ -310,6 +461,9 @@ func process(runningSeconds int, prob *problem.Problem, solver Solver) (Solution
 	select {
 	case <-ctx.Done():
 		log.Println("  timeout")
+		go func() {
+			_, _ = <-ch
+		}()
 		return nil, -1
 	case sol, ok := <-ch:
 		if ok {
@@ -331,10 +485,63 @@ func run(runningSeconds int, prob *problem.Problem, solver Solver) (time.Time, <
 			log.Println(err)
 			return
 		}
-		select {
-		case ch <- sol:
-		default:
-		}
+		ch <- sol
 	}()
 	return startTime, ch
+}
+
+func showBestSolution(file io.Writer, best *Result) (err error) {
+
+	prob := best.Game.Problem
+
+	if _, err = fmt.Fprintln(file, "SEED:", prob.Seed()); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+		return
+	}
+
+	if err = show.ShowField(file, prob); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, "BEST SOLUTION (SCORE", best.Game.Score, ")"); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+		return
+	}
+
+	steps := make([]*game.Game, best.Game.Steps)
+
+	cur := best.Game
+	for cur.Steps > 0 {
+		steps[cur.Prev.Steps] = cur
+		cur = cur.Prev
+	}
+
+	for _, step := range steps {
+		if err = show.ShowGameWithMark(file, step.Prev, step.Taked); err != nil {
+			return
+		}
+		if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+			return
+		}
+	}
+
+	if err = show.ShowGame(file, best.Game); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+		return
+	}
+
+	return
 }

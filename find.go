@@ -9,6 +9,7 @@ import (
 	"github.com/neetsdkasu/sum10-solver/marker"
 	"github.com/neetsdkasu/sum10-solver/problem"
 	"github.com/neetsdkasu/sum10-solver/search"
+	"github.com/neetsdkasu/sum10-solver/show"
 	"github.com/neetsdkasu/sum10-solver/util"
 	"io"
 	"log"
@@ -81,7 +82,7 @@ func (this *SolWriter) Problem() {
 	if this.err != nil {
 		return
 	}
-	this.err = showField(this.file, this.prob)
+	this.err = show.ShowField(this.file, this.prob)
 }
 
 func (this *SolWriter) Time() {
@@ -184,7 +185,7 @@ func (this *SolWriter) Solution() {
 			if this.err != nil {
 				return
 			}
-			this.err = showGameWithMark(this.file, step.Prev, step.Taked)
+			this.err = show.ShowGameWithMark(this.file, step.Prev, step.Taked)
 			if this.err != nil {
 				return
 			}
@@ -196,7 +197,7 @@ func (this *SolWriter) Best() {
 	if this.err != nil {
 		return
 	}
-	this.err = showGame(this.file, this.best)
+	this.err = show.ShowGame(this.file, this.best)
 }
 
 func (this *SolWriter) Statistics() {
@@ -529,7 +530,7 @@ func (this *SolWriter) FirstSteps() {
 		if this.err != nil {
 			return
 		}
-		this.err = showFieldWithMark(file, prob, step)
+		this.err = show.ShowFieldWithMark(file, prob, step)
 		if this.err != nil {
 			return
 		}
