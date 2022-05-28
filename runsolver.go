@@ -1,15 +1,13 @@
-// SUM10-SOLVER
-// author: Leonardone @ NEETSDKASU
-
 package main
 
 import (
 	"fmt"
+	"github.com/neetsdkasu/sum10-solver/solver"
 	"log"
 	"os"
 )
 
-func run(seed int, withStatistics bool) (err error) {
+func runSolver(seed int, name string, limitSeconds, tryCount int) (err error) {
 	var file *os.File
 
 	fileName := fmt.Sprintf("result%05d.txt", seed)
@@ -28,11 +26,14 @@ func run(seed int, withStatistics bool) (err error) {
 		}
 	}()
 
-	fmt.Printf("SUM10パズルのSEED=%dに対するランダム解を大量に生成し、その中からスコアの一番高い解を見つけます\n", seed)
-	fmt.Println("この作業には数十分以上の時間がかかります")
+	fmt.Printf("ソルバ『%s』でSEED=%dの解を探します\n", name, seed)
+
+	sol, _ := solver.FindSolver(name)
+	fmt.Println("ソルバの詳細： ", sol.Description())
+
 	log.Println("開始します")
 
-	if err = findGoodSolution(file, uint32(seed), withStatistics); err != nil {
+	if err = solver.Solve(file, seed, name, limitSeconds, tryCount); err != nil {
 		return
 	}
 

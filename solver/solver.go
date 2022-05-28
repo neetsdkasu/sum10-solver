@@ -32,6 +32,26 @@ func Count() int {
 	return len(solvers)
 }
 
+func SolverList() []string {
+	list := make([]string, len(solvers))
+	for i, solver := range solvers {
+		list[i] = solver.Name()
+	}
+	return list
+}
+
+func FindSolver(name string) (Solver, bool) {
+	if _, ok := uniqueSolverName[name]; !ok {
+		return nil, false
+	}
+	for _, solver := range solvers {
+		if name == solver.Name() {
+			return solver, true
+		}
+	}
+	return nil, false
+}
+
 func Register(solver Solver) {
 	name := solver.Name()
 	if _, ok := uniqueSolverName[name]; ok {
@@ -48,6 +68,14 @@ type Result struct {
 	Duration time.Duration
 }
 
+func newResult(prob *problem.Problem, sol Solution, dur time.Duration) *Result {
+	return &Result{
+		Solution: sol,
+		Game:     sol.Replay(prob),
+		Duration: dur,
+	}
+}
+
 func (res *Result) IsError() bool {
 	return res.Duration == 0
 }
@@ -58,6 +86,69 @@ func (res *Result) IsTimeout() bool {
 
 func (res *Result) IsValid() bool {
 	return res.Game != nil && res.Duration > 0
+}
+
+func Solve(file io.Writer, seed int, name string, runningSeconds, tryCount int) (err error) {
+	log.Println("Running Solver-Mode")
+	log.Println("  seed          :", seed)
+	log.Println("  solver name   :", name)
+	log.Println("  running limit :", runningSeconds, "sec.")
+	log.Println("  try count     :", tryCount)
+
+	prob := problem.New(uint32(seed))
+	solver, _ := FindSolver(name)
+
+	var best *Result = nil
+
+	for i := 1; i <= tryCount; i++ {
+		log.Println("process [", i, "/", tryCount, "]")
+		sol, dur := process(runningSeconds, prob, solver)
+		res := newResult(prob, sol, dur)
+		if res.IsValid() {
+			score := res.Game.Score
+			if best == nil || best.Game.Score < score {
+				best = res
+				if tryCount > 1 {
+					log.Println("  SUCCESS: score", score, "(UPDATE BEST)")
+				} else {
+					log.Println("  SUCCESS: score", score)
+				}
+			} else {
+				log.Println("  SUCCESS: score", score)
+			}
+		} else if res.IsTimeout() {
+			log.Println("  FAILURE: time out")
+		} else {
+			log.Println("  FAILURE: error")
+		}
+	}
+
+	if best != nil {
+		err = showBestSolution(file, best)
+		return
+	}
+
+	log.Println("NO SOLUTION FOUND")
+
+	if _, err = fmt.Fprintln(file, "SEED:", prob.Seed()); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+		return
+	}
+
+	if err = show.ShowField(file, prob); err != nil {
+		return
+	}
+
+	if _, err = fmt.Fprintln(file, "----------------------------------------------"); err != nil {
+		return
+	}
+
+	_, err = fmt.Fprintln(file, "解を見つけることができませんでした")
+
+	return
 }
 
 func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
@@ -120,11 +211,7 @@ func Comp(file io.Writer, runningSeconds, numOfTestcase, seed int) (err error) {
 		for k, prob := range problemList {
 			log.Printf("  [%3d/%3d] Seed: %5d", k+1, numOfTestcase, prob.Seed())
 			sol, dur := process(runningSeconds, prob, solver)
-			results[i][k] = &Result{
-				Solution: sol,
-				Game:     sol.Replay(prob),
-				Duration: dur,
-			}
+			results[i][k] = newResult(prob, sol, dur)
 		}
 	}
 
